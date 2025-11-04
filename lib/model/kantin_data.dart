@@ -143,19 +143,19 @@ final List<Menu> _kantinB = [
 final List<Menu> _kantinC = [
   Makanan(
     name: 'Nasi Goreng Seafood',
-    image: _ph,
+    image: 'assets/nasigorengseafood.jpg',
     price: 20000,
     description: 'Nasi goreng campur seafood.',
   ),
   Makanan(
     name: 'Mie Rebus Spesial',
-    image: _ph,
+    image: 'assets/mie rebus spesial.jpg',
     price: 15000,
     description: 'Mie rebus dengan kuah kaya rasa.',
   ),
   Makanan(
     name: 'Tongseng Daging',
-    image: _ph,
+    image: 'assets/tongseng daging.jpg',
     price: 22000,
     description: 'Tongseng daging empuk.',
   ),
