@@ -57,19 +57,19 @@ final List<Menu> _kantinA = [
   ),
   Minuman(
     name: 'Jus Alpukat',
-    image: _ph,
+    image: 'assets/Jus Alpukat.jpg',
     price: 13000,
     description: 'Alpukat segar dilumat.',
   ),
   SnackMenu(
     name: 'Donat Gulung',
-    image: _ph,
+    image: 'assets/Donat Gulung.jpg',
     price: 6000,
     description: 'Donat lembut.',
   ),
   SnackMenu(
     name: 'Pisang Goreng Keju',
-    image: _ph,
+    image: 'assets/pisang goreng keju.jpg',
     price: 7000,
     description: 'Pisang goreng manis dengan keju.',
   ),
