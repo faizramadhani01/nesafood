@@ -98,7 +98,10 @@ class DetailMenuScreen extends StatelessWidget {
                             vertical: 14,
                           ),
                         ),
-                        child: Text('Order Now', style: GoogleFonts.poppins()),
+                        child: Text(
+                          'Lakukan Pemesanan',
+                          style: GoogleFonts.poppins(),
+                        ),
                       ),
                     ],
                   ),
