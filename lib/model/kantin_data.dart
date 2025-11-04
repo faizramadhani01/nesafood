@@ -207,25 +207,25 @@ final List<Menu> _kantinC = [
 final List<Menu> _kantinD = [
   Makanan(
     name: 'Nasi Timbel',
-    image: _ph,
+    image: 'assets/nasi tiwul.jpg',
     price: 16000,
     description: 'Nasi timbel lengkap.',
   ),
   Makanan(
     name: 'Ayam Kecap',
-    image: _ph,
+    image: 'assets/ayam kecap.jpg',
     price: 17000,
     description: 'Ayam masak kecap manis.',
   ),
   Makanan(
     name: 'Sop Buntut',
-    image: _ph,
+    image: 'assets/sop buntut.jpg',
     price: 28000,
     description: 'Sop buntut gurih.',
   ),
   Minuman(
     name: 'Es Soda Gembira',
-    image: _ph,
+    image: 'assets/es soda gembira.jpg',
     price: 10000,
     description: 'Soda manis dan segar.',
   ),
@@ -249,7 +249,7 @@ final List<Menu> _kantinD = [
   ),
   Makanan(
     name: 'Ikan Goreng Sambal Matah',
-    image: _ph,
+    image: 'assets/ikan goreng sambal matah.jpg',
     price: 20000,
     description: 'Ikan goreng + sambal matah.',
   ),
