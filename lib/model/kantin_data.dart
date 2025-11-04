@@ -271,7 +271,7 @@ final List<Menu> _kantinD = [
 final List<Menu> _kantinE = [
   Makanan(
     name: 'Nasi Padang Mini',
-    image: 'asset/nasipadangmini.jpg',
+    image: 'assets/nasipadangmini.jpg',
     price: 20000,
     description: 'Porsi kecil berbagai lauk padang.',
   ),
