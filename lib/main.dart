@@ -7,9 +7,9 @@ void main() => runApp(const MyApp());
 
 // Widget utama aplikasi
 class MyApp extends StatelessWidget {
-  const MyApp({super.key})
+  const MyApp({super.key});
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
