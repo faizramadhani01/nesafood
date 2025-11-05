@@ -1,4 +1,4 @@
-import 'menu.dart';
+qimport 'menu.dart';
 
 class Kantin {
   final String name;
