@@ -8,9 +8,6 @@ class Kantin {
   const Kantin({required this.name, required this.image, required this.menus});
 }
 
-// Gunakan asset placeholder jika tidak ada gambar spesifik
-const _ph = 'assets/placeholder_food.png';
-
 // --- Kantin A (pertahankan image & beberapa menu awal) ---
 final List<Menu> _kantinA = [
   Makanan(
@@ -231,19 +228,19 @@ final List<Menu> _kantinD = [
   ),
   Minuman(
     name: 'Teh Panas',
-    image: _ph,
+    image: 'assets/teh panas.jpeg',
     price: 5000,
     description: 'Teh panas sederhana.',
   ),
   SnackMenu(
     name: 'Pisang Cokelat',
-    image: _ph,
+    image: 'assets/pisang cokelat.jpeg',
     price: 8000,
     description: 'Pisang goreng isi cokelat.',
   ),
   SnackMenu(
     name: 'Kroket Kentang',
-    image: _ph,
+    image: 'assets/kroket.jpeg',
     price: 9000,
     description: 'Kroket kentang renyah.',
   ),
@@ -255,13 +252,13 @@ final List<Menu> _kantinD = [
   ),
   SnackMenu(
     name: 'Roti Bakar Cokelat',
-    image: _ph,
+    image: 'assets/roti bakar coklat.jpg',
     price: 10000,
     description: 'Roti bakar manis.',
   ),
   SnackMenu(
     name: 'Kue Putu',
-    image: _ph,
+    image: 'assets/kue putu.jpeg',
     price: 7000,
     description: 'Kue putu wangi.',
   ),
