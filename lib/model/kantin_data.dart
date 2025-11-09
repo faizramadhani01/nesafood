@@ -4,8 +4,14 @@ class Kantin {
   final String name;
   final String image;
   final List<Menu> menus;
+  double rating;
 
-  const Kantin({required this.name, required this.image, required this.menus});
+  Kantin({
+    required this.name,
+    required this.image,
+    required this.menus,
+    this.rating = 4.8,
+  });
 }
 
 // --- Kantin A (pertahankan image & beberapa menu awal) ---
@@ -330,7 +336,11 @@ final List<Menu> _kantinE = [
 
 // Gabungkan menjadi list kantin (hanya 5 kantin)
 final List<Kantin> kantinList = [
-  Kantin(name: 'Kantin Bu Dar', image: 'assets/foodcourt.jpg', menus: _kantinA),
+  Kantin(
+    name: 'Kantin Bu Dar',
+    image: 'assets/foodcourt.jpg',
+    menus: _kantinA,
+  ),
   Kantin(
     name: 'Kantin Bu Slamet',
     image: 'assets/kantin1.jpg',
@@ -341,6 +351,14 @@ final List<Kantin> kantinList = [
     image: 'assets/kantin2.jpg',
     menus: _kantinC,
   ),
-  Kantin(name: 'Kantin Dina', image: 'assets/kantin3.jpg', menus: _kantinD),
-  Kantin(name: 'Kantin Paijo', image: 'assets/kantin4.jpg', menus: _kantinE),
+  Kantin(
+    name: 'Kantin Dina',
+    image: 'assets/kantin3.jpg',
+    menus: _kantinD,
+  ),
+  Kantin(
+    name: 'Kantin Paijo',
+    image: 'assets/kantin4.jpg',
+    menus: _kantinE,
+  ),
 ];

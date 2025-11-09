@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'headbar_screen.dart';
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
@@ -31,12 +32,77 @@ class _HomeScreenState extends State<HomeScreen> {
   // hero carousel controller
   final PageController _heroController = PageController(viewportFraction: 0.98);
 
+  // ratings for kantins
+  late Map<String, double> kantinRatings;
+
   @override
   void initState() {
     super.initState();
     username = (widget.username?.trim().isEmpty ?? true)
         ? 'Guest'
         : widget.username!.trim();
+    kantinRatings = {for (var k in kantinList) k.name: k.rating};
+  }
+
+  void _showRatingDialog(Kantin k) {
+    double selectedRating = k.rating;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: Text('Rate ${k.name}', style: GoogleFonts.poppins()),
+          content: Container(
+            constraints: const BoxConstraints(maxHeight: 80),
+            alignment: Alignment.center,
+            child: RatingStars(
+              value: selectedRating,
+              onValueChanged: (v) {
+                setStateDialog(() {
+                  selectedRating = v;
+                });
+              },
+              starBuilder: (index, color) => Icon(Icons.star, color: color),
+              starCount: 5,
+              starSize: 24,
+              valueLabelColor: const Color(0xff9b9b9b),
+              valueLabelTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.normal,
+              ),
+              valueLabelRadius: 10,
+              maxValue: 5,
+              starSpacing: 6,
+              maxValueVisibility: false,
+              valueLabelVisibility: false,
+              animationDuration: Duration(milliseconds: 300),
+              valueLabelPadding: const EdgeInsets.symmetric(
+                vertical: 1,
+                horizontal: 8,
+              ),
+              valueLabelMargin: const EdgeInsets.only(right: 8),
+              starOffColor: const Color(0xffe7e8ea),
+              starColor: Colors.yellow,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: GoogleFonts.poppins()),
+            ),
+            TextButton(
+              onPressed: () {
+                k.rating = selectedRating;
+                kantinRatings[k.name] = k.rating;
+                setState(() {});
+                Navigator.of(context).pop();
+              },
+              child: Text('OK', style: GoogleFonts.poppins()),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   int get cartTotalCount => itemCounts.values.fold(0, (a, b) => a + b);
@@ -230,7 +296,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: _statCard(Icons.star, 'Rating', '4.8')),
+                        Expanded(
+                          child: _statCard(
+                            Icons.star,
+                            'Rating',
+                            (kantinList
+                                        .map((k) => k.rating)
+                                        .reduce((a, b) => a + b) /
+                                    kantinList.length)
+                                .toStringAsFixed(1),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -616,6 +692,7 @@ class _HomeScreenState extends State<HomeScreen> {
         activeKantin = k;
         selectedIndex = 1;
       }),
+      onLongPress: () => _showRatingDialog(k),
       child: Container(
         width: 320,
         decoration: BoxDecoration(
@@ -676,28 +753,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     Positioned(
                       right: 12,
                       top: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.orange,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '4.8',
-                              style: GoogleFonts.poppins(fontSize: 12),
-                            ),
-                          ],
+                      child: GestureDetector(
+                        onTap: () => _showRatingDialog(k),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.95),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: Colors.orange,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                kantinRatings[k.name]?.toStringAsFixed(1) ??
+                                    '4.8',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
