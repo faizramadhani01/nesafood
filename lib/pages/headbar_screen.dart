@@ -61,7 +61,6 @@ class _HeadBarState extends State<HeadBar> {
 
   @override
   Widget build(BuildContext context) {
-    // use NesaColors for consistent theming
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

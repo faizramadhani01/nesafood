@@ -14,7 +14,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'NESAFOOD',
-      // Menggunakan tema warna yang ceria, cocok untuk aplikasi makanan
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
       // Aplikasi dimulai dengan SplashScreen dari file terpisah
       home: const SplashScreen(),

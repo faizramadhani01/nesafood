@@ -188,7 +188,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                // navigate to SignUp screen (matches login design)
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
