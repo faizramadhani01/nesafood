@@ -11,6 +11,7 @@ import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
 import 'profile_panel_screen.dart';
 import 'model/menu.dart';
+import 'pages/my_profile_screen.dart'; // <-- LOKASI IMPORT DIPERBAIKI
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +51,14 @@ final GoRouter _router = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signin', builder: (context, state) => const SignUpScreen()),
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) {
+        // 2. PERBARUI RUTE /home UNTUK MENERIMA 'extra'
+        final username = state.extra as String?;
+        return HomeScreen(username: username);
+      },
+    ),
     GoRoute(
       path: '/detail/:menuId',
       builder: (context, state) => DetailMenuScreen(
@@ -65,6 +73,15 @@ final GoRouter _router = GoRouter(
       path: '/profile',
       builder: (context, state) =>
           ProfilePanel(username: 'User', onClose: () {}), // Placeholder
+    ),
+
+    // 3. TAMBAHKAN RUTE BARU UNTUK HALAMAN PROFIL
+    GoRoute(
+      path: '/my-profile',
+      builder: (context, state) {
+        final username = state.extra as String? ?? 'Guest';
+        return MyProfileScreen(username: username);
+      },
     ),
   ],
 );

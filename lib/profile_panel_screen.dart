@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // <-- 1. IMPORT DITAMBAHKAN
 import 'login_screen.dart';
 
 class ProfilePanel extends StatelessWidget {
@@ -44,27 +45,38 @@ class ProfilePanel extends StatelessWidget {
             ListTile(
               leading: Icon(Icons.account_circle),
               title: Text('Profil Saya'),
-              onTap: () {},
+              onTap: () {
+                // 2. BAGIAN INI DIUBAH
+                // Tutup panel
+                onClose();
+                // Navigasi ke halaman detail profil baru
+                context.go('/my-profile', extra: username);
+              },
             ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Pengaturan Akun'),
-              onTap: () {},
+              onTap: () {
+                onClose(); // Tutup panel
+                // Tambahkan navigasi pengaturan jika ada
+                // context.go('/settings');
+              },
             ),
             ListTile(
               leading: Icon(Icons.history),
               title: Text('Riwayat Pesanan'),
-              onTap: () {},
+              onTap: () {
+                onClose(); // Tutup panel
+                // Tambahkan navigasi riwayat jika ada
+                // context.go('/order-history');
+              },
             ),
             ListTile(
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                // Logout: contoh kembali ke login
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+                // 3. MENGGUNAKAN GO_ROUTER UNTUK LOGOUT
+                context.go('/login');
               },
             ),
             const SizedBox(height: 8),

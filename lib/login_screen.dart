@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state.isSuccess) {
             final user = emailController.text.trim();
-            context.go('/home');
+            context.go('/home', extra: user);
           }
           if (state.error != null) {
             ScaffoldMessenger.of(
@@ -145,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: state.isLoading
                                 ? null
                                 : () {
+                                  final String usernameForHome = emailController.text.trim();
                                     context.read<LoginCubit>().login(
                                       emailController.text,
                                       passwordController.text,
