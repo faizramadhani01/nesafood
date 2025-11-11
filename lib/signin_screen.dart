@@ -262,6 +262,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                           context.read<LoginCubit>().register(
                                             _emailCtrl.text,
                                             _passwordCtrl.text,
+                                            _nameCtrl
+                                                .text, // <-- kirim nama ke register
                                           );
                                         },
                                   style: ElevatedButton.styleFrom(

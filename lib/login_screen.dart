@@ -4,6 +4,9 @@ import 'cubit/login_cubit.dart';
 import 'pages/home_screen.dart';
 import 'signin_screen.dart';
 import 'theme.dart';
+import 'admin/login_admin_screen.dart';
+
+enum LoginType { user, admin }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  LoginType _loginType = LoginType.user;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool showPassword = false;
@@ -80,6 +84,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
+                        // Pilihan login
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ChoiceChip(
+                              label: Text('User'),
+                              selected: _loginType == LoginType.user,
+                              onSelected: (_) =>
+                                  setState(() => _loginType = LoginType.user),
+                            ),
+                            const SizedBox(width: 12),
+                            ChoiceChip(
+                              label: Text('Admin'),
+                              selected: _loginType == LoginType.admin,
+                              onSelected: (_) =>
+                                  setState(() => _loginType = LoginType.admin),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
                         // Email field
                         TextField(
                           controller: emailController,
@@ -148,11 +172,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: ElevatedButton(
                             onPressed: state.isLoading
                                 ? null
-                                : () {
-                                    context.read<LoginCubit>().login(
-                                      emailController.text,
-                                      passwordController.text,
-                                    );
+                                : () async {
+                                    if (_loginType == LoginType.user) {
+                                      context.read<LoginCubit>().login(
+                                        emailController.text,
+                                        passwordController.text,
+                                      );
+                                    } else {
+                                      // Navigasi ke login admin
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const AdminLoginScreen(),
+                                        ),
+                                      );
+                                    }
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: NesaColors.terracotta,
