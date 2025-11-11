@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MyProfileScreen extends StatelessWidget {
-  final String username;
+  final String username; 
 
   const MyProfileScreen({super.key, required this.username});
 
   @override
   Widget build(BuildContext context) {
-    // Ekstrak inisial dari nama pengguna untuk Avatar
     final initials = username.isNotEmpty ? username.substring(0, 1).toUpperCase() : '?';
+    final displayName = username.split('@').first;
 
     return Scaffold(
       appBar: AppBar(
@@ -37,7 +37,7 @@ class MyProfileScreen extends StatelessWidget {
                 radius: 50,
                 backgroundColor: Colors.grey.shade300,
                 child: Text(
-                  initials,
+                  initials, // Tampilkan inisial
                   style: GoogleFonts.poppins(
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
@@ -47,7 +47,7 @@ class MyProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                username,
+                displayName, // Tampilkan nama pengguna
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -68,9 +68,7 @@ class MyProfileScreen extends StatelessWidget {
                         leading: Icon(Icons.email_outlined, color: Colors.grey.shade700),
                         title: Text('Email', style: GoogleFonts.poppins()),
                         subtitle: Text(
-                          // Di aplikasi nyata, Anda akan meneruskan email
-                          // atau mengambilnya dari state/service
-                          '${username.toLowerCase().replaceAll(' ', '.')}@example.com',
+                          username, // Tampilkan email lengkap
                           style: GoogleFonts.poppins(
                             color: Colors.black87,
                             fontWeight: FontWeight.w500,
@@ -82,7 +80,7 @@ class MyProfileScreen extends StatelessWidget {
                         leading: Icon(Icons.phone_outlined, color: Colors.grey.shade700),
                         title: Text('Nomor Telepon', style: GoogleFonts.poppins()),
                         subtitle: Text(
-                          '+62 812 3456 7890',
+                          '+62 812 3456 7890', // Data contoh
                           style: GoogleFonts.poppins(
                             color: Colors.black87,
                             fontWeight: FontWeight.w500,

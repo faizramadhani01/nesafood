@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // <-- 1. IMPORT DITAMBAHKAN
+import 'package:go_router/go_router.dart';
 import 'login_screen.dart';
 
 class ProfilePanel extends StatelessWidget {
-  final String username;
+  final String username; 
   final VoidCallback onClose;
 
   const ProfilePanel({
@@ -14,6 +14,9 @@ class ProfilePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initials = username.isNotEmpty ? username.substring(0, 1).toUpperCase() : '?';
+    final displayName = username.split('@').first;
+
     return Material(
       elevation: 8,
       borderRadius: BorderRadius.circular(24),
@@ -28,17 +31,29 @@ class ProfilePanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Foto profil
+
             CircleAvatar(
               radius: 36,
-              backgroundImage: AssetImage(
-                'assets/profile.png',
-              ), // Ganti sesuai asset
+              backgroundColor: Colors.grey.shade300,
+              child: Text(
+                initials,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             Text(
-              username,
+              displayName, 
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              username, 
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 18),
             Divider(),
@@ -46,20 +61,15 @@ class ProfilePanel extends StatelessWidget {
               leading: Icon(Icons.account_circle),
               title: Text('Profil Saya'),
               onTap: () {
-                // 2. BAGIAN INI DIUBAH
-                // Tutup panel
-                onClose();
-                // Navigasi ke halaman detail profil baru
                 context.go('/my-profile', extra: username);
+                onClose();
               },
             ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Pengaturan Akun'),
               onTap: () {
-                onClose(); // Tutup panel
-                // Tambahkan navigasi pengaturan jika ada
-                // context.go('/settings');
+                onClose(); 
               },
             ),
             ListTile(
@@ -67,15 +77,12 @@ class ProfilePanel extends StatelessWidget {
               title: Text('Riwayat Pesanan'),
               onTap: () {
                 onClose(); // Tutup panel
-                // Tambahkan navigasi riwayat jika ada
-                // context.go('/order-history');
               },
             ),
             ListTile(
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                // 3. MENGGUNAKAN GO_ROUTER UNTUK LOGOUT
                 context.go('/login');
               },
             ),
