@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
 import 'login_screen.dart';
 import 'theme.dart';
@@ -54,7 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 content: Text('Registrasi berhasil! Silakan login.'),
               ),
             );
-            Navigator.pop(context); // Kembali ke login
+            context.go('/login'); // Kembali ke login
           }
           if (state.error != null) {
             ScaffoldMessenger.of(
@@ -76,11 +78,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
+                    constraints: BoxConstraints(maxWidth: 80.w), // Responsif
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 36,
-                        horizontal: 32,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 9.h, // Responsif
+                        horizontal: 8.w, // Responsif
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.60),
@@ -290,12 +292,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   TextButton(
-                                    onPressed: () => Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const LoginScreen(),
-                                      ),
-                                    ),
+                                    onPressed: () => context.go('/login'),
                                     child: Text(
                                       'Already have an account?',
                                       style: GoogleFonts.poppins(

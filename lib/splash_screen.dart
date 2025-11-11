@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'login_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sizer/sizer.dart';
 
 // --- Halaman Splash Screen ---
 
@@ -23,10 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _goToLogin() {
     if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+    context.go('/login');
   }
 
   @override
@@ -37,6 +35,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('Splash Screen')));
+    return Scaffold(
+      body: Center(
+        child: Text(
+          'Splash Screen',
+          style: TextStyle(
+            fontSize: 24.sp,
+          ), // Menggunakan Sizer untuk ukuran font responsif
+        ),
+      ),
+    );
   }
 }

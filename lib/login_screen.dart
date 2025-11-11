@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
 import 'pages/home_screen.dart';
 import 'signin_screen.dart';
@@ -25,13 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state.isSuccess) {
             final user = emailController.text.trim();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    HomeScreen(username: user.isEmpty ? 'Guest' : user),
-              ),
-            );
+            context.go('/home');
           }
           if (state.error != null) {
             ScaffoldMessenger.of(
@@ -47,10 +43,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 Image.asset('assets/image.png', fit: BoxFit.cover),
                 Center(
                   child: Container(
-                    width: 400,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 36,
-                      horizontal: 32,
+                    width: 80.w, // Menggunakan Sizer untuk lebar responsif
+                    padding: EdgeInsets.symmetric(
+                      vertical: 9.h, // Responsif
+                      horizontal: 8.w, // Responsif
                     ),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(
@@ -192,12 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const SignUpScreen(),
-                                  ),
-                                );
+                                context.go('/signin');
                               },
                               child: const Text(
                                 'Sign Up',

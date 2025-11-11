@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
+import 'package:sizer/sizer.dart';
 import 'headbar_screen.dart';
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
@@ -266,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: SizedBox(
-                        height: 220,
+                        height: 22.h,
                         child: PageView.builder(
                           controller: _heroController,
                           itemCount: heroItems.length,
