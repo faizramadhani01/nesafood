@@ -18,8 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // tampilkan splash selama 2 detik lalu ke LoginScreen
-    _timer = Timer(const Duration(seconds: 2), _goToLogin);
+    _timer = Timer(const Duration(seconds: 3), _goToLogin);
   }
 
   void _goToLogin() {
@@ -36,12 +35,41 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Text(
-          'Splash Screen',
-          style: TextStyle(
-            fontSize: 24.sp,
-          ), // Menggunakan Sizer untuk ukuran font responsif
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(),
+            // Logo di tengah
+            Center(
+              child: Image.asset(
+                'assets/logo.png',
+                width: 18.w,
+                height: 18.w,
+                fit: BoxFit.contain,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            // Lingkaran loading hitam
+            const CircularProgressIndicator(
+              color: Colors.black,
+              strokeWidth: 4,
+            ),
+            const Spacer(),
+            // Nama pembuat di bawah
+            Padding(
+              padding: EdgeInsets.only(bottom: 2.h),
+              child: Text(
+                'Kelompok 3',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

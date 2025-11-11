@@ -30,20 +30,17 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Sizer(
+  runApp(
+    Sizer(
       builder: (context, orientation, deviceType) {
-        return MaterialApp.router(title: 'Nesafood', routerConfig: _router);
+        return MaterialApp.router(
+          routerConfig: _router,
+          title: 'Nesafood',
+          debugShowCheckedModeBanner: false,
+        );
       },
-    );
-  }
+    ),
+  );
 }
 
 final GoRouter _router = GoRouter(
