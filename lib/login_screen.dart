@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubit/login_cubit.dart';
 import 'pages/home_screen.dart';
-import 'signin_screen.dart'; // <-- added import for SignUp / Signin screen
+import 'signin_screen.dart';
 import 'theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool showPassword = false;
 
@@ -21,50 +21,54 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => LoginCubit(),
-      child: Scaffold(
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset('assets/image.png', fit: BoxFit.cover),
-            Center(
-              child: Container(
-                width: 400,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 36,
-                  horizontal: 32,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.60),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 24,
-                      offset: Offset(0, 12),
+      child: BlocConsumer<LoginCubit, LoginState>(
+        listener: (context, state) {
+          if (state.isSuccess) {
+            final user = emailController.text.trim();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    HomeScreen(username: user.isEmpty ? 'Guest' : user),
+              ),
+            );
+          }
+          if (state.error != null) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.error!)));
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset('assets/image.png', fit: BoxFit.cover),
+                Center(
+                  child: Container(
+                    width: 400,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 36,
+                      horizontal: 32,
                     ),
-                  ],
-                ),
-                child: BlocConsumer<LoginCubit, LoginState>(
-                  listener: (context, state) {
-                    if (state.isSuccess) {
-                      final user = usernameController.text.trim();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HomeScreen(
-                            username: user.isEmpty ? 'Guest' : user,
-                          ),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(
+                        255,
+                        0,
+                        0,
+                        0,
+                      ).withOpacity(0.60),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 24,
+                          offset: Offset(0, 12),
                         ),
-                      );
-                    }
-                    if (state.error != null) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(state.error!)));
-                    }
-                  },
-                  builder: (context, state) {
-                    return Column(
+                      ],
+                    ),
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
@@ -78,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 28),
                         // Email field
                         TextField(
-                          controller: usernameController,
+                          controller: emailController,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             hintText: 'Email',
@@ -146,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? null
                                 : () {
                                     context.read<LoginCubit>().login(
-                                      usernameController.text,
+                                      emailController.text,
                                       passwordController.text,
                                     );
                                   },
@@ -255,13 +259,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                       ],
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

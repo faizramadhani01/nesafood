@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'detail_menu_screen.dart';
 import '../model/menu.dart';
 import '../theme.dart';
+import '../services/firestore_service.dart';
 
 class CartScreen extends StatefulWidget {
   final Map<String, int> counts;
@@ -245,6 +246,20 @@ class _CartScreenState extends State<CartScreen> {
         ),
       );
     }
+  }
+
+  Future<void> saveOrder(
+    String userId,
+    double totalPrice,
+    List<Map<String, dynamic>> items,
+  ) async {
+    final firestoreService = FirestoreService();
+    await firestoreService.addOrder({
+      'userId': userId,
+      'totalPrice': totalPrice,
+      'items': items,
+      'orderDate': DateTime.now().toIso8601String(),
+    });
   }
 
   Widget _emptyView() {
