@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
-import 'login_screen.dart';
+// import 'login_screen.dart'; // <-- Tidak perlu, kita pakai GoRouter
 import 'theme.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -31,18 +31,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Akun berhasil dibuat (demo).')),
-    );
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    });
-  }
+  // --- Fungsi _submit() demo telah dihapus ---
 
   @override
   Widget build(BuildContext context) {
@@ -169,13 +158,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty)
+                                  if (v == null || v.trim().isEmpty) {
                                     return 'Email wajib diisi';
+                                  }
                                   final emailRe = RegExp(
                                     r'^[^@]+@[^@]+\.[^@]+',
                                   );
-                                  if (!emailRe.hasMatch(v.trim()))
+                                  if (!emailRe.hasMatch(v.trim())) {
                                     return 'Format email tidak valid';
+                                  }
                                   return null;
                                 },
                               ),
@@ -214,9 +205,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.isEmpty)
+                                  if (v == null || v.isEmpty) {
                                     return 'Password wajib diisi';
-                                  if (v.length < 6) return 'Minimal 6 karakter';
+                                  }
+                                  if (v.length < 6) {
+                                    return 'Minimal 6 karakter';
+                                  }
                                   return null;
                                 },
                               ),
@@ -245,10 +239,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.isEmpty)
+                                  if (v == null || v.isEmpty) {
                                     return 'Konfirmasi password wajib';
-                                  if (v != _passwordCtrl.text)
+                                  }
+                                  if (v != _passwordCtrl.text) {
                                     return 'Password tidak cocok';
+                                  }
                                   return null;
                                 },
                               ),
@@ -261,12 +257,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   onPressed: state.isLoading
                                       ? null
                                       : () {
-                                          context.read<LoginCubit>().register(
-                                            _emailCtrl.text,
-                                            _passwordCtrl.text,
-                                            _nameCtrl
-                                                .text, // <-- kirim nama ke register
-                                          );
+                                          // Validasi form sebelum register
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            context.read<LoginCubit>().register(
+                                              _emailCtrl.text.trim(),
+                                              _passwordCtrl.text.trim(),
+                                              _nameCtrl.text.trim(),
+                                            );
+                                          }
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: terracotta,
