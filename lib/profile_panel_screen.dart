@@ -58,8 +58,8 @@ class ProfilePanel extends StatelessWidget {
               title: Text('Pengaturan Akun'),
               onTap: () {
                 onClose(); // Tutup panel
-                // Tambahkan navigasi pengaturan jika ada
-                // context.go('/settings');
+                // Navigasi ke halaman pengaturan akun
+                context.go('/settings', extra: username);
               },
             ),
             ListTile(
@@ -67,8 +67,8 @@ class ProfilePanel extends StatelessWidget {
               title: Text('Riwayat Pesanan'),
               onTap: () {
                 onClose(); // Tutup panel
-                // Tambahkan navigasi riwayat jika ada
-                // context.go('/order-history');
+                // Navigasi ke halaman riwayat pesanan
+                context.go('/order-history', extra: username);
               },
             ),
             ListTile(

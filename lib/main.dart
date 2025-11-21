@@ -9,6 +9,8 @@ import 'signin_screen.dart';
 import 'pages/home_screen.dart';
 import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
+import 'pages/settings_screen.dart';
+import 'pages/order_history_screen.dart';
 import 'profile_panel_screen.dart';
 import 'model/menu.dart';
 import 'pages/my_profile_screen.dart'; // <-- LOKASI IMPORT DIPERBAIKI
@@ -78,6 +80,24 @@ final GoRouter _router = GoRouter(
       builder: (context, state) {
         final username = state.extra as String? ?? 'Guest';
         return MyProfileScreen(username: username);
+      },
+    ),
+    
+    // 4. TAMBAHKAN RUTE UNTUK HALAMAN PENGATURAN AKUN
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) {
+        final username = state.extra as String? ?? 'Guest';
+        return SettingsScreen(username: username);
+      },
+    ),
+    
+    // 5. TAMBAHKAN RUTE UNTUK HALAMAN RIWAYAT PESANAN
+    GoRoute(
+      path: '/order-history',
+      builder: (context, state) {
+        final username = state.extra as String? ?? 'Guest';
+        return OrderHistoryScreen(username: username);
       },
     ),
   ],
