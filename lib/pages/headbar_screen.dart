@@ -30,7 +30,7 @@ class HeadBar extends StatefulWidget implements PreferredSizeWidget {
   State<HeadBar> createState() => _HeadBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(88.0);
+  Size get preferredSize => Size.fromHeight(8.h);
 }
 
 class _HeadBarState extends State<HeadBar> {
@@ -62,124 +62,140 @@ class _HeadBarState extends State<HeadBar> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth <= 800;
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 12,
-                offset: Offset(0, 6),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 8.h,
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 2.w : 2.5.w),
+          child: Row(
+            children: [
+              // Logo - responsive dengan Sizer
+              SizedBox(
+                height: 7.h,
+                width: isMobile ? 10.w : 12.w,
+                child: Image.asset(
+                  'assets/logo.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox(),
+                ),
+              ),
+              SizedBox(width: 1.5.w),
+
+              // Menu buttons - di sebelah logo (kiri dari search)
+              _MenuButton(
+                label: 'Home',
+                selected: widget.selectedIndex == 0,
+                onTap: () => widget.onMenuTap(0),
+                selectedColor: NesaColors.terracotta,
+                compact: isMobile,
+              ),
+              SizedBox(width: isMobile ? 1.w : 1.w),
+              _MenuButton(
+                label: 'Menu',
+                selected: widget.selectedIndex == 1,
+                onTap: () => widget.onMenuTap(1),
+                selectedColor: NesaColors.terracotta,
+                compact: isMobile,
+              ),
+              SizedBox(width: isMobile ? 1.w : 1.w),
+              _MenuButton(
+                label: 'About',
+                selected: widget.selectedIndex == 2,
+                onTap: () => widget.onMenuTap(2),
+                selectedColor: NesaColors.terracotta,
+                compact: isMobile,
+              ),
+
+              // Flexible spacer to push search and icons to the right
+              if (!isMobile) const Spacer() else const Spacer(),
+
+              // Search field - responsive dengan Sizer (lebih lebar di desktop)
+              if (!isMobile)
+                SizedBox(width: 30.w, child: _buildSearchField(compact: false))
+              else
+                SizedBox(width: 30.w, child: _buildSearchField(compact: true)),
+
+              SizedBox(width: isMobile ? 0.5.w : 1.w),
+
+              // Cart icon with badge
+              badges.Badge(
+                showBadge: widget.cartCount > 0,
+                badgeContent: Text(
+                  '${widget.cartCount}',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                child: IconButton(
+                  onPressed: widget.onCartTap,
+                  icon: const Icon(
+                    Icons.shopping_cart,
+                    color: Colors.black87,
+                    size: 24,
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 0.5.w),
+
+              // Profile icon
+              GestureDetector(
+                onTap: widget.onProfileTap,
+                child: const CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.black12,
+                  child: Icon(Icons.person, color: Colors.black87, size: 20),
+                ),
               ),
             ],
           ),
-          child: SafeArea(
-            child: Container(
-              height: 88,
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
-              child: Row(
-                children: [
-                  SizedBox(
-                    height: isMobile ? 40 : 56,
-                    child: Image.asset(
-                      'assets/logo.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const SizedBox(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Spacer(),
-                  _MenuButton(
-                    label: 'Home',
-                    selected: widget.selectedIndex == 0,
-                    onTap: () => widget.onMenuTap(0),
-                    selectedColor: NesaColors.terracotta,
-                  ),
-                  const SizedBox(width: 8),
-                  _MenuButton(
-                    label: 'Menu',
-                    selected: widget.selectedIndex == 1,
-                    onTap: () => widget.onMenuTap(1),
-                    selectedColor: NesaColors.terracotta,
-                  ),
-                  const SizedBox(width: 8),
-                  _MenuButton(
-                    label: 'About',
-                    selected: widget.selectedIndex == 2,
-                    onTap: () => widget.onMenuTap(2),
-                    selectedColor: NesaColors.terracotta,
-                  ),
-                  SizedBox(width: isMobile ? 12 : 18),
-                  SizedBox(
-                    width: isMobile ? 50.w : 320,
-                    child: TextField(
-                      controller: _ctrl,
-                      onChanged: (v) {
-                        if (widget.onSearch != null) widget.onSearch!(v);
-                        setState(() {}); // update clear icon
-                      },
-                      onSubmitted: (v) {
-                        if (widget.onSearch != null) widget.onSearch!(v);
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search menu or kantin',
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: _ctrl.text.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                onPressed: () {
-                                  _ctrl.clear();
-                                  if (widget.onSearch != null)
-                                    widget.onSearch!('');
-                                  setState(() {});
-                                },
-                              ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: isMobile ? 8 : 16),
-                  // Cart icon with badge (pakai alias badges.Badge)
-                  badges.Badge(
-                    showBadge: widget.cartCount > 0,
-                    badgeContent: Text(
-                      '${widget.cartCount}',
-                      style: const TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                    child: IconButton(
-                      onPressed: widget.onCartTap,
-                      icon: const Icon(
-                        Icons.shopping_cart,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: widget.onProfileTap,
-                    child: const CircleAvatar(
-                      backgroundColor: Colors.black12,
-                      child: Icon(Icons.person, color: Colors.black87),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField({bool compact = false}) {
+    return TextField(
+      controller: _ctrl,
+      onChanged: (v) {
+        if (widget.onSearch != null) widget.onSearch!(v);
+        setState(() {}); // update clear icon
       },
+      onSubmitted: (v) {
+        if (widget.onSearch != null) widget.onSearch!(v);
+      },
+      decoration: InputDecoration(
+        hintText: 'Search menu or kantin',
+        prefixIcon: Icon(Icons.search, size: compact ? 18 : 20),
+        filled: true,
+        fillColor: Colors.grey[100],
+        contentPadding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(compact ? 20 : 12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: _ctrl.text.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () {
+                  _ctrl.clear();
+                  if (widget.onSearch != null) widget.onSearch!('');
+                  setState(() {});
+                },
+              ),
+      ),
     );
   }
 }
@@ -189,28 +205,39 @@ class _MenuButton extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final Color? selectedColor;
+  final bool compact;
 
   const _MenuButton({
     required this.label,
     required this.selected,
     required this.onTap,
     this.selectedColor,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final horizontal = compact ? 10.0 : 12.0;
+    final vertical = compact ? 6.0 : 8.0;
+    final fontSize = compact ? 13.sp : 12.sp;
+    final radius = selected ? 12.0 : 8.0;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(radius),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontal,
+          vertical: vertical,
+        ),
         decoration: BoxDecoration(
           color: selected ? selectedColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radius),
         ),
         child: Text(
           label,
           style: GoogleFonts.poppins(
+            fontSize: fontSize,
             color: selected ? Colors.white : Colors.black87,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           ),

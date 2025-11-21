@@ -170,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F5F3),
       appBar: HeadBar(
@@ -193,7 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
               return Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: buildMainContent(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 8.0 : 12.0,
+                    ),
+                    child: buildMainContent(),
+                  ),
                 ),
               );
             },
@@ -202,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned(
               // place profile panel directly under the app bar (statusBar + toolbar)
               top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
-              right: 24,
+              right: 16,
               child: ProfilePanel(
                 username: username,
                 onClose: handleProfileTap,
@@ -239,230 +245,220 @@ class _HomeScreenState extends State<HomeScreen> {
         ? kantinList.first.menus.take(6).toList()
         : <Menu>[];
 
+    // compact mode for small screens to match mobile layout in screenshot
+    final compact = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
+      padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 2.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Hero + CTA
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left: hero carousel + quick stats
-              Expanded(
-                flex: 3,
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 14,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
+          if (compact)
+            // MOBILE: stack vertically - hero carousel, stats, greeting card
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 14,
+                        offset: Offset(0, 8),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: SizedBox(
-                        height: 22.h,
-                        child: PageView.builder(
-                          controller: _heroController,
-                          itemCount: heroItems.length,
-                          itemBuilder: (context, i) {
-                            final k = heroItems[i];
-                            return _heroCard(k);
-                          },
-                        ),
+                    ],
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 2.h),
+                  child: SizedBox(
+                    height: 22.h,
+                    child: PageView.builder(
+                      controller: _heroController,
+                      itemCount: heroItems.length,
+                      itemBuilder: (context, i) {
+                        final k = heroItems[i];
+                        return _heroCard(k);
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _statCard(
+                        Icons.restaurant,
+                        'Kantin',
+                        '${kantinList.length}',
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _statCard(
-                            Icons.restaurant,
-                            'Kantin',
-                            '${kantinList.length}',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _statCard(
-                            Icons.fastfood,
-                            'Menu',
-                            '${kantinList.fold<int>(0, (p, e) => p + e.menus.length)}',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _statCard(
-                            Icons.star,
-                            'Rating',
-                            (kantinList
-                                        .map((k) => k.rating)
-                                        .reduce((a, b) => a + b) /
-                                    kantinList.length)
-                                .toStringAsFixed(1),
-                          ),
-                        ),
-                      ],
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: _statCard(
+                        Icons.fastfood,
+                        'Menu',
+                        '${kantinList.fold<int>(0, (p, e) => p + e.menus.length)}',
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: _statCard(
+                        Icons.star,
+                        'Rating',
+                        (kantinList
+                                    .map((k) => k.rating)
+                                    .reduce((a, b) => a + b) /
+                                kantinList.length)
+                            .toStringAsFixed(1),
+                      ),
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(width: 18),
-
-              // Right: quick search + promo / user greeting
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
+                SizedBox(height: 2.h),
+                _buildGreetingCard(compact: true),
+              ],
+            )
+          else
+            // DESKTOP: keep original Row layout with hero left and greeting card right
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left: hero carousel + quick stats
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 14,
+                              offset: Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 2.h),
+                        child: SizedBox(
+                          height: 22.h,
+                          child: PageView.builder(
+                            controller: _heroController,
+                            itemCount: heroItems.length,
+                            itemBuilder: (context, i) {
+                              final k = heroItems[i];
+                              return _heroCard(k);
+                            },
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _statCard(
+                              Icons.restaurant,
+                              'Kantin',
+                              '${kantinList.length}',
+                            ),
+                          ),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: _statCard(
+                              Icons.fastfood,
+                              'Menu',
+                              '${kantinList.fold<int>(0, (p, e) => p + e.menus.length)}',
+                            ),
+                          ),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: _statCard(
+                              Icons.star,
+                              'Rating',
+                              (kantinList
+                                          .map((k) => k.rating)
+                                          .reduce((a, b) => a + b) /
+                                      kantinList.length)
+                                  .toStringAsFixed(1),
+                            ),
                           ),
                         ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.asset(
-                                  'assets/logo.png',
-                                  height: 52,
-                                  width: 52,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) =>
-                                      const SizedBox(),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Halo, $username',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Temukan makanan favoritmu hari ini',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () => setState(() => selectedIndex = 1),
-                            icon: const Icon(Icons.storefront),
-                            label: Text(
-                              'Pesan Sekarang',
+                    ],
+                  ),
+                ),
+
+                SizedBox(width: 3.w),
+
+                // Right: quick search + promo / user greeting
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildGreetingCard(compact: false),
+                      SizedBox(height: 2.h),
+                      Container(
+                        padding: EdgeInsets.all(2.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 10,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Kantin Terdekat',
                               style: GoogleFonts.poppins(
+                                fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: terracotta,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Promo Hari Ini',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _promoCard(),
-                        ],
+                            SizedBox(height: 1.h),
+                            SizedBox(height: 10.h, child: _nearbyKantinList()),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 10,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Kantin Terdekat',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(height: 90, child: _nearbyKantinList()),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          const SizedBox(height: 26),
+          SizedBox(height: 4.h),
 
           // Featured Kantin Strip
           Text(
             'Kantin Populer',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 2.h),
           SizedBox(
-            height: 170,
+            height: 20.h,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding: EdgeInsets.symmetric(horizontal: 0.5.w),
               itemBuilder: (context, i) =>
                   _featuredKantinTile(kantinList[i % kantinList.length]),
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              separatorBuilder: (_, __) => SizedBox(width: 2.w),
               itemCount: kantinList.length,
             ),
           ),
 
-          const SizedBox(height: 26),
+          SizedBox(height: 4.h),
 
           // Recommended Menus grid
           Row(
@@ -471,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Rekomendasi Hari Ini',
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -484,9 +480,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 2.h),
           GridView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 1.h),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: featuredMenus.length,
@@ -501,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _menuCard(featuredMenus[i], allowAdd: false),
           ),
 
-          const SizedBox(height: 36),
+          SizedBox(height: 6.h),
         ],
       ),
     );
@@ -607,12 +603,197 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _promoCard() {
+  // Greeting card with responsive layout: vertical on mobile, horizontal on desktop
+  Widget _buildGreetingCard({required bool compact}) {
     return Container(
-      margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(compact ? 3.w : 2.h),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: compact
+          ? // MOBILE: horizontal layout - logo left, text & button & promo right
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: 6.5.h,
+                        width: 6.5.h,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Halo, $username',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 0.4.h),
+                          Text(
+                            'Temukan makanan favoritmu hari ini',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.sp,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 1.5.h),
+                // pill button
+                ElevatedButton(
+                  onPressed: () => setState(() => selectedIndex = 1),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: terracotta,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4.w,
+                      vertical: 1.1.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Icon(
+                          Icons.storefront,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 2.w),
+                      Text(
+                        'Pesan Sekarang',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 1.6.h),
+                Text(
+                  'Promo Hari Ini',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 0.8.h),
+                _promoCard(compact: true),
+              ],
+            )
+          : // DESKTOP: horizontal layout - logo left, text & button & promo right
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: 8.h,
+                        width: 8.h,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
+                    SizedBox(width: 2.w),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Halo, $username',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 0.5.h),
+                          Text(
+                            'Temukan makanan favoritmu hari ini',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.sp,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2.h),
+                ElevatedButton(
+                  onPressed: () => setState(() => selectedIndex = 1),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: terracotta,
+                    padding: EdgeInsets.symmetric(vertical: 2.h),
+                  ),
+                  child: Text(
+                    'Pesan Sekarang',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Promo Hari Ini',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 1.h),
+                _promoCard(compact: false),
+              ],
+            ),
+    );
+  }
+
+  Widget _promoCard({bool compact = false}) {
+    return Container(
+      margin: EdgeInsets.only(top: compact ? 8 : 6),
+      padding: EdgeInsets.symmetric(
+        vertical: compact ? 3.h : 12,
+        horizontal: compact ? 4.w : 12,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(compact ? 14 : 10),
         gradient: LinearGradient(
           colors: [terracotta, terracotta.withOpacity(0.86)],
         ),
@@ -625,12 +806,16 @@ class _HomeScreenState extends State<HomeScreen> {
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w700,
+              fontSize: compact ? 16.sp : 13.sp,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: compact ? 1.2.h : 6),
           Text(
             'Gunakan kode: NESA20',
-            style: GoogleFonts.poppins(color: Colors.white70),
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: compact ? 15.sp : 12.sp,
+            ),
           ),
         ],
       ),

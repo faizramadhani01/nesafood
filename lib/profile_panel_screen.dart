@@ -14,12 +14,13 @@ class ProfilePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Material(
       elevation: 8,
       borderRadius: BorderRadius.circular(24),
       color: Colors.transparent,
       child: Container(
-        width: 240,
+        width: isMobile ? 220 : 240,
         padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.grey[200],
@@ -30,7 +31,7 @@ class ProfilePanel extends StatelessWidget {
           children: [
             // Foto profil
             CircleAvatar(
-              radius: 36,
+              radius: isMobile ? 32 : 36,
               backgroundImage: AssetImage(
                 'assets/profile.png',
               ), // Ganti sesuai asset
@@ -38,7 +39,10 @@ class ProfilePanel extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               username,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 16 : 18,
+              ),
             ),
             const SizedBox(height: 18),
             Divider(),

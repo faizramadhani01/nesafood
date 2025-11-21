@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sizer/sizer.dart';
 import '../model/menu.dart';
 import '../theme.dart';
 
@@ -10,6 +11,7 @@ class DetailMenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const terracotta = NesaColors.terracotta;
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F5F3),
       appBar: AppBar(
@@ -26,20 +28,20 @@ class DetailMenuScreen extends StatelessWidget {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
+          constraints: BoxConstraints(maxWidth: 90.w),
           child: Card(
-            margin: const EdgeInsets.all(24),
+            margin: EdgeInsets.all(isMobile ? 4.w : 6.w),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             elevation: 10,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(isMobile ? 4.w : 6.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
-                    height: 220,
+                    height: isMobile ? 22.h : 28.h,
                     child: Image.asset(
                       menu.image,
                       fit: BoxFit.contain,
@@ -49,62 +51,96 @@ class DetailMenuScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 1.8.h),
                   Text(
                     menu.name,
                     style: GoogleFonts.poppins(
-                      fontSize: 24,
+                      fontSize: isMobile ? 20.sp : 24.sp,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 0.8.h),
                   Text(
                     'Rp${menu.price.toStringAsFixed(0)}',
                     style: GoogleFonts.poppins(
-                      fontSize: 20,
+                      fontSize: isMobile ? 18.sp : 20.sp,
                       color: terracotta,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 1.6.h),
                   Text(
                     menu.description,
-                    style: GoogleFonts.poppins(fontSize: 16),
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 14.sp : 16.sp,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const Spacer(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 14,
-                          ),
+                  isMobile
+                      ? Column(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: terracotta,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 1.8.h,
+                                ),
+                              ),
+                              child: Text(
+                                'Lakukan Pemesanan',
+                                style: GoogleFonts.poppins(),
+                              ),
+                            ),
+                            SizedBox(height: 1.6.h),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 1.8.h,
+                                ),
+                              ),
+                              child: Text('Back', style: GoogleFonts.poppins()),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: Text('Back', style: GoogleFonts.poppins()),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: terracotta,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: Text(
+                                'Lakukan Pemesanan',
+                                style: GoogleFonts.poppins(),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Text('Back', style: GoogleFonts.poppins()),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: terracotta,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 14,
-                          ),
-                        ),
-                        child: Text(
-                          'Lakukan Pemesanan',
-                          style: GoogleFonts.poppins(),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

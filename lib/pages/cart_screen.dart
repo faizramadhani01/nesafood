@@ -403,6 +403,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -429,7 +430,12 @@ class _CartScreenState extends State<CartScreen> {
       ),
       backgroundColor: NesaColors.background,
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 8 : 16,
+          12,
+          isMobile ? 8 : 16,
+          16,
+        ),
         child: localCounts.isEmpty
             ? _emptyView()
             : Column(
@@ -460,73 +466,155 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: isMobile
+                        ? Column(
                             children: [
-                              Text(
-                                'Total',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.black54,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Rp${totalPrice.toStringAsFixed(0)}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _printReceipt,
+                                      icon: const Icon(Icons.print_outlined),
+                                      label: Text(
+                                        'Cetak',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: NesaColors.terracotta,
+                                        side: BorderSide(
+                                          color: NesaColors.terracotta,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: _confirmCheckout,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: NesaColors.terracotta,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 12,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Checkout',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Total',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Rp${totalPrice.toStringAsFixed(0)}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Rp${totalPrice.toStringAsFixed(0)}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: _printReceipt,
+                                icon: const Icon(Icons.print_outlined),
+                                label: Text(
+                                  'Checkout',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: NesaColors.terracotta,
+                                  side: BorderSide(
+                                    color: NesaColors.terracotta,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: _confirmCheckout,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: NesaColors.terracotta,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Checkout',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: _printReceipt,
-                          icon: const Icon(Icons.print_outlined),
-                          label: Text(
-                            'Checkout',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: NesaColors.terracotta,
-                            side: BorderSide(color: NesaColors.terracotta),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: _confirmCheckout,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: NesaColors.terracotta,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            'Checkout',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

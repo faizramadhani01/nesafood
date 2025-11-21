@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
-import 'login_screen.dart';
 import 'theme.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -31,19 +30,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Akun berhasil dibuat (demo).')),
-    );
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -66,6 +52,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         },
         builder: (context, state) {
           const terracotta = NesaColors.terracotta;
+          final isMobile = MediaQuery.of(context).size.width < 600;
           return Scaffold(
             body: Stack(
               fit: StackFit.expand,
@@ -77,16 +64,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       const ColoredBox(color: Colors.grey),
                 ),
                 Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 80.w), // Responsif
+                  child: SingleChildScrollView(
                     child: Container(
+                      width: isMobile
+                          ? MediaQuery.of(context).size.width * 0.9
+                          : 500,
+                      margin: EdgeInsets.all(2.w),
                       padding: EdgeInsets.symmetric(
-                        vertical: 9.h, // Responsif
-                        horizontal: 8.w, // Responsif
+                        vertical: 6.h,
+                        horizontal: 5.w,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.60),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(3.w),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.black26,
@@ -104,19 +94,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               Text(
                                 'Create Account',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 28,
+                                  fontSize: 28.sp,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 1.6.h),
                               Text(
                                 'Register to start ordering',
                                 style: GoogleFonts.poppins(
+                                  fontSize: 13.sp,
                                   color: Colors.white70,
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              SizedBox(height: 2.h),
 
                               // Name
                               TextFormField(
@@ -144,7 +135,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ? 'Nama wajib diisi'
                                     : null,
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 1.5.h),
 
                               // Email
                               TextFormField(
@@ -179,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 1.5.h),
 
                               // Password
                               TextFormField(
@@ -220,7 +211,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 1.5.h),
 
                               // Confirm
                               TextFormField(
@@ -252,7 +243,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 18),
+                              SizedBox(height: 2.h),
 
                               // Sign Up button
                               SizedBox(
@@ -273,8 +264,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 2.h,
                                     ),
                                   ),
                                   child: state.isLoading
@@ -282,6 +273,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       : Text(
                                           'SIGN UP',
                                           style: GoogleFonts.poppins(
+                                            fontSize: 16.sp,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -308,8 +300,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         onPressed: () {},
                                         icon: Image.asset(
                                           'assets/google.png',
-                                          width: 28,
-                                          height: 28,
+                                          width: 4.w,
+                                          height: 6.w,
                                           errorBuilder: (_, __, ___) =>
                                               const Icon(
                                                 Icons.error,
@@ -317,13 +309,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      SizedBox(width: 2.w),
                                       IconButton(
                                         onPressed: () {},
                                         icon: Image.asset(
                                           'assets/facebook.png',
-                                          width: 28,
-                                          height: 28,
+                                          width: 4.w,
+                                          height: 6.w,
                                           errorBuilder: (_, __, ___) =>
                                               const Icon(
                                                 Icons.error,
