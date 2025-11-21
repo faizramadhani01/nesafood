@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // <-- 1. IMPORT DITAMBAHKAN
-import 'login_screen.dart';
 
 class ProfilePanel extends StatelessWidget {
   final String username;

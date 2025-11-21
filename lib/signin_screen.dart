@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
+// import 'login_screen.dart'; // <-- Tidak perlu, kita pakai GoRouter
 import 'theme.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -30,6 +31,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  // --- Fungsi _submit() demo telah dihapus ---
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -52,7 +55,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         },
         builder: (context, state) {
           const terracotta = NesaColors.terracotta;
-          final isMobile = MediaQuery.of(context).size.width < 600;
           return Scaffold(
             body: Stack(
               fit: StackFit.expand,
@@ -64,19 +66,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       const ColoredBox(color: Colors.grey),
                 ),
                 Center(
-                  child: SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 80.w), // Responsif
                     child: Container(
-                      width: isMobile
-                          ? MediaQuery.of(context).size.width * 0.9
-                          : 500,
-                      margin: EdgeInsets.all(2.w),
                       padding: EdgeInsets.symmetric(
-                        vertical: 6.h,
-                        horizontal: 5.w,
+                        vertical: 9.h, // Responsif
+                        horizontal: 8.w, // Responsif
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.60),
-                        borderRadius: BorderRadius.circular(3.w),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.black26,
@@ -94,20 +93,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               Text(
                                 'Create Account',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 28.sp,
+                                  fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: 1.6.h),
+                              const SizedBox(height: 16),
                               Text(
                                 'Register to start ordering',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 13.sp,
                                   color: Colors.white70,
                                 ),
                               ),
-                              SizedBox(height: 2.h),
+                              const SizedBox(height: 20),
 
                               // Name
                               TextFormField(
@@ -135,7 +133,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ? 'Nama wajib diisi'
                                     : null,
                               ),
-                              SizedBox(height: 1.5.h),
+                              const SizedBox(height: 12),
 
                               // Email
                               TextFormField(
@@ -160,17 +158,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.trim().isEmpty)
+                                  if (v == null || v.trim().isEmpty) {
                                     return 'Email wajib diisi';
+                                  }
                                   final emailRe = RegExp(
                                     r'^[^@]+@[^@]+\.[^@]+',
                                   );
-                                  if (!emailRe.hasMatch(v.trim()))
+                                  if (!emailRe.hasMatch(v.trim())) {
                                     return 'Format email tidak valid';
+                                  }
                                   return null;
                                 },
                               ),
-                              SizedBox(height: 1.5.h),
+                              const SizedBox(height: 12),
 
                               // Password
                               TextFormField(
@@ -205,13 +205,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.isEmpty)
+                                  if (v == null || v.isEmpty) {
                                     return 'Password wajib diisi';
-                                  if (v.length < 6) return 'Minimal 6 karakter';
+                                  }
+                                  if (v.length < 6) {
+                                    return 'Minimal 6 karakter';
+                                  }
                                   return null;
                                 },
                               ),
-                              SizedBox(height: 1.5.h),
+                              const SizedBox(height: 12),
 
                               // Confirm
                               TextFormField(
@@ -236,14 +239,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 validator: (v) {
-                                  if (v == null || v.isEmpty)
+                                  if (v == null || v.isEmpty) {
                                     return 'Konfirmasi password wajib';
-                                  if (v != _passwordCtrl.text)
+                                  }
+                                  if (v != _passwordCtrl.text) {
                                     return 'Password tidak cocok';
+                                  }
                                   return null;
                                 },
                               ),
-                              SizedBox(height: 2.h),
+                              const SizedBox(height: 18),
 
                               // Sign Up button
                               SizedBox(
@@ -252,20 +257,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   onPressed: state.isLoading
                                       ? null
                                       : () {
-                                          context.read<LoginCubit>().register(
-                                            _emailCtrl.text,
-                                            _passwordCtrl.text,
-                                            _nameCtrl
-                                                .text, // <-- kirim nama ke register
-                                          );
+                                          // Validasi form sebelum register
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            context.read<LoginCubit>().register(
+                                              _emailCtrl.text.trim(),
+                                              _passwordCtrl.text.trim(),
+                                              _nameCtrl.text.trim(),
+                                            );
+                                          }
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: terracotta,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 2.h,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
                                     ),
                                   ),
                                   child: state.isLoading
@@ -273,7 +281,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       : Text(
                                           'SIGN UP',
                                           style: GoogleFonts.poppins(
-                                            fontSize: 16.sp,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -300,8 +307,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         onPressed: () {},
                                         icon: Image.asset(
                                           'assets/google.png',
-                                          width: 4.w,
-                                          height: 6.w,
+                                          width: 28,
+                                          height: 28,
                                           errorBuilder: (_, __, ___) =>
                                               const Icon(
                                                 Icons.error,
@@ -309,13 +316,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               ),
                                         ),
                                       ),
-                                      SizedBox(width: 2.w),
+                                      const SizedBox(width: 8),
                                       IconButton(
                                         onPressed: () {},
                                         icon: Image.asset(
                                           'assets/facebook.png',
-                                          width: 4.w,
-                                          height: 6.w,
+                                          width: 28,
+                                          height: 28,
                                           errorBuilder: (_, __, ___) =>
                                               const Icon(
                                                 Icons.error,
