@@ -13,6 +13,13 @@ class AuthService {
     return credential.user;
   }
 
+  // --- TAMBAHAN BARU ---
+  // Fungsi untuk mengambil data user dari koleksi 'users'
+  Future<DocumentSnapshot> getUserData(String uid) async {
+    return await _db.collection('users').doc(uid).get();
+  }
+  // --- BATAS TAMBAHAN ---
+
   Future<User?> signUpUser(String email, String password, String name) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -22,7 +29,7 @@ class AuthService {
       'email': email,
       'nama': name,
       'role': 'user',
-      'kantinId': null,
+      'kantinId': null, // User biasa tidak punya kantinId
     });
     return credential.user;
   }

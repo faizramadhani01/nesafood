@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'cubit/login_cubit.dart';
-import 'pages/home_screen.dart';
-import 'signin_screen.dart';
+import 'pages/home_screen.dart'; // Digunakan oleh GoRouter
+import 'signin_screen.dart'; // Digunakan oleh GoRouter
 import 'theme.dart';
-import 'admin/login_admin_screen.dart';
+import 'admin/dashboard_admin_screen.dart'; // Digunakan oleh GoRouter
 
 enum LoginType { user, admin }
 
@@ -30,9 +30,16 @@ class _LoginScreenState extends State<LoginScreen> {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state.isSuccess) {
+            // Ini menggunakan rute /home (yang butuh 'home_screen.dart')
             final user = emailController.text.trim();
             context.go('/home', extra: user);
           }
+
+          if (state.isAdminSuccess) {
+            // Ini menggunakan rute /admin-dashboard (yang butuh 'dashboard_admin_screen.dart')
+            context.go('/admin-dashboard', extra: state.kantinId);
+          }
+
           if (state.error != null) {
             ScaffoldMessenger.of(
               context,
@@ -175,13 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                         passwordController.text,
                                       );
                                     } else {
-                                      // Navigasi ke login admin
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const AdminLoginScreen(),
-                                        ),
+                                      // Langsung panggil fungsi loginAdmin
+                                      context.read<LoginCubit>().loginAdmin(
+                                        emailController.text,
+                                        passwordController.text,
                                       );
                                     }
                                   },
@@ -223,6 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
+                                // Ini menggunakan rute /signin (yang butuh 'signin_screen.dart')
                                 context.go('/signin');
                               },
                               child: const Text(
