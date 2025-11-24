@@ -9,6 +9,7 @@ class LoginState {
   final bool isAdminSuccess;
   final String? error;
   final String? userId;
+  final String? fullName;
   final String? kantinId;
 
   LoginState({
@@ -34,7 +35,17 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final user = await _authService.signIn(email, password);
       if (user != null) {
-        emit(LoginState(isSuccess: true, userId: user.uid));
+        // Try to fetch user's full name from Firestore 'users' collection
+        String? name;
+        try {
+          final doc = await _authService.getUserData(user.uid);
+          final data = doc.data() as Map<String, dynamic>?;
+          name = data != null ? (data['nama'] as String?) : null;
+        } catch (_) {
+          name = user.displayName;
+        }
+
+        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
       } else {
         emit(LoginState(error: "Login gagal."));
       }
@@ -57,8 +68,17 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final user = await _authService.signInWithGoogle();
       if (user != null) {
-        // Login Google sukses, dianggap sebagai User biasa
-        emit(LoginState(isSuccess: true, userId: user.uid));
+        // Login Google sukses, ambil nama dari firestore jika tersedia
+        String? name;
+        try {
+          final doc = await _authService.getUserData(user.uid);
+          final data = doc.data() as Map<String, dynamic>?;
+          name = data != null ? (data['nama'] as String?) : null;
+        } catch (_) {
+          name = user.displayName;
+        }
+
+        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
       } else {
         // User membatalkan login (tekan back saat pilih akun)
         // Kita kembalikan state ke awal (tidak loading, tidak error)
@@ -105,7 +125,7 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final user = await _authService.signUpUser(email, password, name);
       if (user != null) {
-        emit(LoginState(isSuccess: true, userId: user.uid));
+        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
       } else {
         emit(LoginState(error: "Registrasi gagal"));
       }
