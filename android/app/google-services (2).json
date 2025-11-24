@@ -12,7 +12,12 @@
           "package_name": "com.example.nesafood"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "782804576113-6ueahbqno8ch5ah8um1t790ubno4hmvq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBCy-SUTImQy2glMkxDDzD5iaeKcF9cUzk"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "782804576113-6ueahbqno8ch5ah8um1t790ubno4hmvq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
