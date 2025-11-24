@@ -9,6 +9,7 @@ class LoginState {
   final bool isAdminSuccess; // State sukses untuk Admin
   final String? error;
   final String? userId;
+  final String? fullName;
   final String? kantinId; // Data khusus admin
 
   LoginState({
@@ -17,6 +18,7 @@ class LoginState {
     this.isAdminSuccess = false,
     this.error,
     this.userId,
+    this.fullName,
     this.kantinId,
   });
 }
@@ -37,9 +39,18 @@ class LoginCubit extends Cubit<LoginState> {
       final user = await _authService.signIn(email, password);
 
       if (user != null) {
-        // Jika berhasil login Auth, langsung dianggap SUKSES.
-        // User langsung diarahkan ke Home tanpa validasi role db.
-        emit(LoginState(isSuccess: true, userId: user.uid));
+        // Jika berhasil login Auth, ambil data user dari Firestore untuk mendapatkan nama lengkap
+        String? name;
+        try {
+          final doc = await _authService.getUserData(user.uid);
+          final data = doc.data() as Map<String, dynamic>?;
+          name = data != null ? (data['nama'] as String?) : null;
+        } catch (_) {
+          name = user.displayName;
+        }
+
+        // Jika berhasil login Auth, langsung dianggap SUKSES dan sertakan fullName bila ada.
+        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
       } else {
         emit(LoginState(error: "Login gagal."));
       }
@@ -107,7 +118,7 @@ class LoginCubit extends Cubit<LoginState> {
       final user = await _authService.signUpUser(email, password, name);
       if (user != null) {
         // Register sukses langsung masuk
-        emit(LoginState(isSuccess: true, userId: user.uid));
+        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
       } else {
         emit(LoginState(error: "Registrasi gagal"));
       }

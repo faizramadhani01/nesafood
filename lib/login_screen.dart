@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) {
           if (state.isSuccess) {
             // Ini menggunakan rute /home (yang butuh 'home_screen.dart')
-            final user = emailController.text.trim();
+            final user = state.fullName ?? emailController.text.trim();
             context.go('/home', extra: user);
           }
 
