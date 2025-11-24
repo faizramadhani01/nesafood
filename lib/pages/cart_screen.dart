@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,14 +7,17 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'detail_menu_screen.dart';
 import '../model/menu.dart';
-import '../theme.dart';
+import '../model/order.dart';
+import 'package:go_router/go_router.dart';
 import '../services/firestore_service.dart';
+import '../theme.dart';
 
 class CartScreen extends StatefulWidget {
   final Map<String, int> counts;
   final Map<String, Menu> menuMap;
+  final String? username;
 
-  const CartScreen({super.key, required this.counts, required this.menuMap});
+  const CartScreen({super.key, required this.counts, required this.menuMap, this.username});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -243,11 +245,51 @@ class _CartScreenState extends State<CartScreen> {
 
     if (ok == true) {
       // TODO: Integrasi backend pesanan di sini
+
+      // Buat Order objects dari isi keranjang
+      final List<Order> newOrders = [];
+      final now = DateTime.now();
+      int counter = 1;
+      localCounts.forEach((name, qty) {
+        final menu = localMenuMap[name];
+        final price = menu?.price ?? 0;
+        final total = price * qty;
+        final id = 'ORD${now.millisecondsSinceEpoch}${counter++}';
+        newOrders.add(Order(
+          id: id,
+          menuName: name,
+          price: price,
+          quantity: qty,
+          totalPrice: total,
+          orderDate: now,
+          status: 'paid',
+          menuImage: menu?.image ?? '',
+        ));
+      });
+      // Persist orders to Firestore
+      final fs = FirestoreService();
+      final userId = widget.username ?? 'Guest';
+      try {
+        await Future.wait(newOrders.map((o) => fs.addOrder(o.toMap(userId: userId))));
+      } catch (e) {
+        // If saving fails, show error and stop
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan pesanan: $e', style: GoogleFonts.poppins()),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       setState(() {
         localCounts.clear();
         localMenuMap.clear();
       });
-      Navigator.pop(context, localCounts);
+
+      // Navigasi ke Riwayat Pesanan (OrderHistoryScreen will load from Firestore)
+      context.go('/order-history', extra: userId);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -27,11 +27,11 @@ class Menu {
 // --- Subclass Makanan ---
 class Makanan extends Menu {
   Makanan({
-    required String name,
-    required String image,
-    required double price,
-    required String description,
-  }) : super(name: name, image: image, price: price, description: description);
+    required super.name,
+    required super.image,
+    required super.price,
+    required super.description,
+  });
 
   @override
   String getCategory() => 'Makanan';
@@ -40,11 +40,11 @@ class Makanan extends Menu {
 // --- Subclass Minuman ---
 class Minuman extends Menu {
   Minuman({
-    required String name,
-    required String image,
-    required double price,
-    required String description,
-  }) : super(name: name, image: image, price: price, description: description);
+    required super.name,
+    required super.image,
+    required super.price,
+    required super.description,
+  });
 
   @override
   String getCategory() => 'Minuman';
@@ -53,11 +53,11 @@ class Minuman extends Menu {
 // --- Subclass Snack ---
 class SnackMenu extends Menu {
   SnackMenu({
-    required String name,
-    required String image,
-    required double price,
-    required String description,
-  }) : super(name: name, image: image, price: price, description: description);
+    required super.name,
+    required super.image,
+    required super.price,
+    required super.description,
+  });
 
   @override
   String getCategory() => 'Snack';

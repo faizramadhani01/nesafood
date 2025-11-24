@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../model/order.dart';
+import '../services/firestore_service.dart';
+import 'dart:async';
 
 class OrderHistoryScreen extends StatefulWidget {
   final String username;
+  final List<Order>? initialOrders;
 
   const OrderHistoryScreen({
     required this.username,
+    this.initialOrders,
     super.key,
   });
 
@@ -21,7 +25,29 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    orders = Order.getPlaceholderOrders();
+    // Jika ada initialOrders (dikirim dari checkout), gunakan itu.
+    orders = widget.initialOrders != null
+        ? List<Order>.from(widget.initialOrders!)
+        : [];
+    // Jika tidak ada initialOrders, dengarkan data dari Firestore berdasarkan username
+    if (widget.initialOrders == null) {
+      _subscribeToFirestore();
+    }
+  }
+
+  StreamSubscription? _ordersSub;
+  final _fs = FirestoreService();
+
+  void _subscribeToFirestore() {
+    final userId = widget.username;
+    _ordersSub = _fs.getOrders(userId).listen((snapshot) {
+      final loaded = snapshot.docs
+          .map((d) => Order.fromMap(d.data() as Map<String, dynamic>, d.id))
+          .toList();
+      setState(() {
+        orders = loaded;
+      });
+    });
   }
 
   List<Order> get filteredOrders {
@@ -36,6 +62,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Pesanan'),
+        actions: [
+          IconButton(
+            tooltip: 'Hapus Semua Riwayat',
+            icon: const Icon(Icons.delete_forever),
+            onPressed: _confirmClearAll,
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/home'),
@@ -267,5 +300,79 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  @override
+  void dispose() {
+    _ordersSub?.cancel();
+    super.dispose();
+  }
+
+  void _confirmClearAll() {
+    if (orders.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak ada riwayat pesanan untuk dihapus.')),
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Semua Riwayat'),
+        content: const Text('Anda yakin ingin menghapus semua riwayat pesanan? Tindakan ini tidak dapat diubah.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              // Backup untuk Undo (simpan maps agar bisa dikirim kembali ke Firestore jika perlu)
+              final backup = List<Order>.from(orders);
+              final backupMaps = backup.map((o) => o.toMap(userId: widget.username)).toList();
+
+              try {
+                // Hapus dari Firestore
+                await _fs.deleteOrdersForUser(widget.username);
+
+                // Update UI
+                setState(() {
+                  orders.clear();
+                });
+
+                // Tampilkan Snackbar dengan opsi Undo (akan mencoba restore ke Firestore)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Semua riwayat pesanan telah dihapus'),
+                    action: SnackBarAction(
+                      label: 'Undo',
+                      onPressed: () async {
+                        try {
+                          await Future.wait(backupMaps.map((m) => _fs.addOrder(m)));
+                          // Firestore listener akan mem-refresh orders otomatis
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Gagal mengembalikan riwayat: $e')),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal menghapus riwayat: $e')),
+                );
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:sizer/sizer.dart';
 import '../theme.dart';
 
 class HeadBar extends StatefulWidget implements PreferredSizeWidget {

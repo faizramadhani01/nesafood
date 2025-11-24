@@ -140,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => CartScreen(
           counts: Map<String, int>.from(itemCounts),
           menuMap: Map<String, Menu>.from(cartItems),
+          username: username,
         ),
       ),
     );
@@ -923,8 +924,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         break;
                                       }
                                     }
-                                    if (parent == null && kantinList.isNotEmpty)
+                                    if (parent == null && kantinList.isNotEmpty) {
                                       parent = kantinList.first;
+                                    }
                                     setState(() {
                                       selectedIndex = 1;
                                       if (parent != null) activeKantin = parent;

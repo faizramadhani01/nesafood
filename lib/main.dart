@@ -15,6 +15,7 @@ import 'pages/settings_screen.dart';
 import 'pages/order_history_screen.dart';
 import 'profile_panel_screen.dart';
 import 'model/menu.dart';
+import 'model/order.dart';
 import 'pages/my_profile_screen.dart';
 import 'admin/dashboard_admin_screen.dart'; // Pastikan import ini ada
 
@@ -98,7 +99,12 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/order-history',
       builder: (context, state) {
-        final username = state.extra as String? ?? 'Guest';
+        final extra = state.extra;
+        if (extra is List<Order>) {
+          // If caller passed a List<Order>, show them in the history
+          return OrderHistoryScreen(username: 'Guest', initialOrders: extra);
+        }
+        final username = extra as String? ?? 'Guest';
         return OrderHistoryScreen(username: username);
       },
     ),
