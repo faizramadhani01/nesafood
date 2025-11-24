@@ -9,6 +9,7 @@ import '../profile_panel_screen.dart';
 import 'detail_menu_screen.dart';
 import 'cart_screen.dart';
 import '../theme.dart';
+import '../services/meal_service.dart'; // Import Service API
 
 class HomeScreen extends StatefulWidget {
   final String? username;
@@ -19,23 +20,29 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // --- STATE VARIABLES ---
   int selectedIndex = 0;
   bool showProfilePanel = false;
   late String username;
   Kantin? activeKantin;
-  final Map<String, int> itemCounts = {}; // quantity per menu name
-  final Map<String, Menu> cartItems = {}; // menu object per name
+
+  // State Keranjang (Cart)
+  final Map<String, int> itemCounts = {};
+  final Map<String, Menu> cartItems = {};
+
+  // Warna Tema (Shortcut)
   static const Color terracotta = NesaColors.terracotta;
   static const Color terracottaLight = NesaColors.terracottaLight;
 
-  // search
+  // Search & Carousel
   String searchQuery = '';
-
-  // hero carousel controller
   final PageController _heroController = PageController(viewportFraction: 0.9);
-
-  // ratings for kantins
   late Map<String, double> kantinRatings;
+
+  // --- API VARIABLES (TheMealDB) ---
+  List<Menu> apiMenus = [];
+  bool isLoadingApi = true;
+  final MealService _mealService = MealService();
 
   @override
   void initState() {
@@ -44,74 +51,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ? 'Guest'
         : widget.username!.trim();
     kantinRatings = {for (var k in kantinList) k.name: k.rating};
+
+    // PANGGIL API SAAT APLIKASI DIBUKA
+    _fetchApiMenus();
   }
 
-  void _showRatingDialog(Kantin k) {
-    double selectedRating = k.rating;
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Beri Rating ${k.name}',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RatingStars(
-                value: selectedRating,
-                onValueChanged: (v) {
-                  setStateDialog(() {
-                    selectedRating = v;
-                  });
-                },
-                starBuilder: (index, color) =>
-                    Icon(Icons.star_rounded, color: color, size: 32),
-                starCount: 5,
-                starSize: 32,
-                valueLabelVisibility: false,
-                animationDuration: const Duration(milliseconds: 300),
-                starOffColor: Colors.grey.shade300,
-                starColor: const Color(0xFFFFC107),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Batal',
-                style: GoogleFonts.poppins(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  k.rating = selectedRating;
-                  kantinRatings[k.name] = k.rating;
-                });
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: terracotta,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Kirim',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  // Fungsi Fetch Data dari Internet
+  Future<void> _fetchApiMenus() async {
+    try {
+      final menus = await _mealService.fetchMeals();
+      if (mounted) {
+        setState(() {
+          // Ambil 8 menu saja agar layout tetap rapi
+          apiMenus = menus.take(8).toList();
+          isLoadingApi = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoadingApi = false);
+      }
+      print("Error fetching API: $e");
+    }
   }
+
+  // --- LOGIKA CART & RATING ---
 
   int get cartTotalCount => itemCounts.values.fold(0, (a, b) => a + b);
 
@@ -126,10 +90,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void handleProfileTap() =>
       setState(() => showProfilePanel = !showProfilePanel);
+  void handleSearch(String q) => setState(() => searchQuery = q.trim());
 
-  void handleSearch(String q) {
+  void _addMenuToCart(Menu m, {int qty = 1}) {
     setState(() {
-      searchQuery = q.trim();
+      itemCounts[m.name] = (itemCounts[m.name] ?? 0) + qty;
+      cartItems[m.name] = m;
+    });
+  }
+
+  void _removeOneFromCart(Menu m) {
+    setState(() {
+      final v = (itemCounts[m.name] ?? 1) - 1;
+      if (v <= 0) {
+        itemCounts.remove(m.name);
+        cartItems.remove(m.name);
+      } else {
+        itemCounts[m.name] = v;
+      }
     });
   }
 
@@ -156,24 +134,62 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _addMenuToCart(Menu m, {int qty = 1}) {
-    setState(() {
-      itemCounts[m.name] = (itemCounts[m.name] ?? 0) + qty;
-      cartItems[m.name] = m;
-    });
+  void _showRatingDialog(Kantin k) {
+    double selectedRating = k.rating;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Beri Rating ${k.name}',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RatingStars(
+                value: selectedRating,
+                onValueChanged: (v) => setStateDialog(() => selectedRating = v),
+                starBuilder: (index, color) =>
+                    Icon(Icons.star_rounded, color: color, size: 32),
+                starCount: 5,
+                starSize: 32,
+                starColor: const Color(0xFFFFC107),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Batal',
+                style: GoogleFonts.poppins(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  k.rating = selectedRating;
+                  kantinRatings[k.name] = k.rating;
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: terracotta),
+              child: Text(
+                'Kirim',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _removeOneFromCart(Menu m) {
-    setState(() {
-      final v = (itemCounts[m.name] ?? 1) - 1;
-      if (v <= 0) {
-        itemCounts.remove(m.name);
-        cartItems.remove(m.name);
-      } else {
-        itemCounts[m.name] = v;
-      }
-    });
-  }
+  // --- BUILD UI UTAMA ---
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Stack(
         children: [
+          // Layout Responsif (Tengah Layar di Desktop)
           LayoutBuilder(
             builder: (context, constraints) {
               final maxWidth = constraints.maxWidth > 1400
@@ -204,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          // Panel Profil Overlay
           if (showProfilePanel)
             Positioned(
               top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
@@ -236,10 +254,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // -----------------------
-  // LANDING / HOME DESIGN
+  // 1. LANDING PAGE / HOME
   // -----------------------
   Widget _buildLanding() {
     final heroItems = kantinList.take(5).toList();
+    // Ambil data lokal
     final featuredMenus = kantinList.isNotEmpty
         ? kantinList.expand((k) => k.menus).take(8).toList()
         : <Menu>[];
@@ -250,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome & Search Section Area (Desktop/Tablet friendly row)
+          // Welcome & Promo Area
           LayoutBuilder(
             builder: (context, constraints) {
               bool isSmall = constraints.maxWidth < 800;
@@ -258,7 +277,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 direction: isSmall ? Axis.vertical : Axis.horizontal,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left: Greeting
                   Expanded(
                     flex: isSmall ? 0 : 3,
                     child: Column(
@@ -271,7 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 text: 'Halo, ',
                                 style: GoogleFonts.poppins(
                                   fontSize: 26,
-                                  fontWeight: FontWeight.w400,
                                   color: Colors.black87,
                                 ),
                               ),
@@ -279,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 text: '$username!',
                                 style: GoogleFonts.poppins(
                                   fontSize: 26,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                   color: terracotta,
                                 ),
                               ),
@@ -288,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Lapar? Ayo pesan makanan favoritmu di kantin kampus tanpa antri.',
+                          'Lapar? Ayo pesan makanan favoritmu sekarang.',
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             color: Colors.black54,
@@ -298,7 +315,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   if (!isSmall) const SizedBox(width: 24),
-                  // Right: Stats or Promo
                   if (!isSmall) Expanded(flex: 2, child: _promoBannerSmall()),
                 ],
               );
@@ -307,46 +323,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 32),
 
-          // Hero Carousel
+          // Hero Carousel (Kantin Pilihan)
           Text(
             'Kantin Pilihan',
             style: GoogleFonts.poppins(
               fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 24.h, // Responsive height
+            height: 24.h,
             child: PageView.builder(
               controller: _heroController,
               padEnds: false,
               itemCount: heroItems.length,
-              itemBuilder: (context, i) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: _heroCard(heroItems[i]),
-                );
-              },
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: _heroCard(heroItems[i]),
+              ),
             ),
           ),
 
           const SizedBox(height: 40),
 
-          // Quick Stats Row
+          // Stats Row
           Row(
             children: [
               Expanded(
                 child: _cleanStatItem(
-                  Icons.storefront_rounded,
+                  Icons.storefront,
                   '${kantinList.length}',
                   'Kantin',
                 ),
               ),
               Expanded(
                 child: _cleanStatItem(
-                  Icons.restaurant_menu_rounded,
+                  Icons.restaurant_menu,
                   '${kantinList.fold<int>(0, (p, e) => p + e.menus.length)}',
                   'Menu',
                 ),
@@ -359,7 +372,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 40),
 
-          // Popular Menus
+          // --- SECTION 1: MENU ONLINE (API) ---
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.public, color: terracotta, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  'Menu Spesial (Online)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (isLoadingApi)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(color: terracotta),
+              ),
+            )
+          else if (apiMenus.isEmpty)
+            Center(
+              child: Text(
+                'Gagal memuat menu online.',
+                style: GoogleFonts.poppins(color: Colors.grey),
+              ),
+            )
+          else
+            GridView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: apiMenus.length,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 280,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.75,
+              ),
+              itemBuilder: (context, i) =>
+                  _menuCard(apiMenus[i], allowAdd: true),
+            ),
+
+          const SizedBox(height: 40),
+
+          // --- SECTION 2: REKOMENDASI LOKAL ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -368,15 +431,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Rekomendasi Hari Ini',
+                    'Rekomendasi Lokal',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pilihan terbaik untuk makan siangmu',
+                    'Favorit mahasiswa di kampus',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: Colors.black54,
@@ -407,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
               maxCrossAxisExtent: 280,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.75, // Taller cards for better layout
+              childAspectRatio: 0.75,
             ),
             itemBuilder: (context, i) =>
                 _menuCard(featuredMenus[i], allowAdd: false),
@@ -419,200 +482,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- WIDGETS FOR LANDING ---
-
-  Widget _promoBannerSmall() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: terracotta,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: terracotta.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.local_offer_rounded, color: Colors.white),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Diskon 20% Pengguna Baru',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  'Kode: NESA20',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _cleanStatItem(IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Icon(icon, color: terracotta, size: 28),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black45),
-        ),
-      ],
-    );
-  }
-
-  Widget _heroCard(Kantin k) {
-    return InkWell(
-      onTap: () => setState(() {
-        activeKantin = k;
-        selectedIndex = 1;
-      }),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  k.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: Colors.grey[200]),
-                ),
-              ),
-              // Gradient Overlay
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(0.7),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                    ),
-                  ),
-                ),
-              ),
-              // Content
-              Positioned(
-                bottom: 20,
-                left: 20,
-                right: 20,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: terracotta,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Open Now',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      k.name,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          color: Colors.amber[400],
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${kantinRatings[k.name]?.toStringAsFixed(1)} • 10-15 min',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // -----------------------
-  // KANTIN SELECTION & MENU VIEWS
+  // 2. KANTIN & MENU PAGE
   // -----------------------
 
   Widget _buildKantinSelection() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -626,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 400,
-              childAspectRatio: 1.8, // Landscape cards for canteen list
+              childAspectRatio: 1.8,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
@@ -640,10 +516,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade100),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -680,13 +555,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.star_rounded,
                                     size: 16,
                                     color: Colors.amber,
@@ -694,10 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     '${kantinRatings[k.name]?.toStringAsFixed(1)}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: GoogleFonts.poppins(fontSize: 13),
                                   ),
                                 ],
                               ),
@@ -720,7 +592,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          const SizedBox(height: 40),
         ],
       ),
     );
@@ -732,8 +603,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final snack = k.menus.where((m) => m.getCategory() == 'Snack').toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -743,11 +613,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onBack: () => setState(() => activeKantin = null),
           ),
           const SizedBox(height: 24),
-
           if (makanan.isNotEmpty) _buildGridSection('Makanan Berat', makanan),
           if (minuman.isNotEmpty) _buildGridSection('Minuman Segar', minuman),
           if (snack.isNotEmpty) _buildGridSection('Cemilan', snack),
-
           const SizedBox(height: 40),
         ],
       ),
@@ -759,7 +627,7 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 16, top: 8),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Row(
             children: [
               Container(width: 4, height: 24, color: terracotta),
@@ -768,8 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title,
                 style: GoogleFonts.poppins(
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -785,17 +652,431 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSpacing: 16,
             childAspectRatio: 0.72,
           ),
-          itemBuilder: (context, i) {
-            return _menuCard(menus[i]);
-          },
+          itemBuilder: (context, i) => _menuCard(menus[i]),
         ),
-        const SizedBox(height: 24),
       ],
+    );
+  }
+
+  // -----------------------
+  // 3. ABOUT PAGE
+  // -----------------------
+  Widget _buildAbout() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        children: [
+          Image.asset(
+            'assets/logo.png',
+            height: 80,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.fastfood, size: 80, color: terracotta),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Nesa Food',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text('v1.0.0', style: GoogleFonts.poppins(color: Colors.grey)),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Tentang Kami',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Aplikasi pemesanan makanan kantin modern untuk memudahkan mahasiswa.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(color: Colors.black54),
+                ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 24),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: terracottaLight,
+                    child: Icon(Icons.code, color: terracotta),
+                  ),
+                  title: Text(
+                    'Developer',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Mahasiswa UNESA',
+                    style: GoogleFonts.poppins(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -----------------------
+  // 4. SEARCH RESULTS
+  // -----------------------
+  Widget _buildSearchResults(String q) {
+    final qLower = q.toLowerCase();
+    final matchingKantins = kantinList
+        .where((k) => k.name.toLowerCase().contains(qLower))
+        .toList();
+    final matchingApiMenus = apiMenus
+        .where((m) => m.name.toLowerCase().contains(qLower))
+        .toList();
+
+    // Jika sedang di dalam kantin tertentu
+    if (activeKantin != null) {
+      final filtered = activeKantin!.menus
+          .where((m) => m.name.toLowerCase().contains(qLower))
+          .toList();
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pencarian di "${activeKantin!.name}"',
+              style: GoogleFonts.poppins(color: Colors.grey),
+            ),
+            Text(
+              '"$q"',
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (filtered.isEmpty)
+              _emptyState('Tidak ada menu cocok.')
+            else
+              _buildGridSection('Hasil Menu', filtered),
+          ],
+        ),
+      );
+    }
+
+    // Global Search
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hasil Pencarian',
+            style: GoogleFonts.poppins(color: Colors.grey),
+          ),
+          Text(
+            '"$q"',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          if (matchingKantins.isNotEmpty) ...[
+            Text(
+              'Kantin',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 180,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: matchingKantins.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                itemBuilder: (context, i) {
+                  final k = matchingKantins[i];
+                  return InkWell(
+                    onTap: () => setState(() {
+                      activeKantin = k;
+                      searchQuery = '';
+                    }),
+                    child: Container(
+                      width: 240,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black12, blurRadius: 8),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
+                              ),
+                              child: Image.asset(
+                                k.image,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              k.name,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
+
+          if (matchingApiMenus.isNotEmpty) ...[
+            Text(
+              'Menu Online',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: matchingApiMenus.length,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 250,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.72,
+              ),
+              itemBuilder: (context, i) => _menuCard(matchingApiMenus[i]),
+            ),
+          ],
+
+          if (matchingKantins.isEmpty && matchingApiMenus.isEmpty)
+            _emptyState('Tidak ada hasil yang cocok.'),
+        ],
+      ),
+    );
+  }
+
+  // --- HELPER WIDGETS ---
+
+  Widget _promoBannerSmall() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: terracotta,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: terracotta.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.local_offer, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Diskon 20% Pengguna Baru',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Kode: NESA20',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cleanStatItem(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Icon(icon, color: terracotta, size: 28),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.black45),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroCard(Kantin k) {
+    return InkWell(
+      onTap: () => setState(() {
+        activeKantin = k;
+        selectedIndex = 1;
+      }),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  k.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      Container(color: Colors.grey[300]),
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.7),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: terracotta,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Open Now',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      k.name,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber[400],
+                          size: 18,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${kantinRatings[k.name]?.toStringAsFixed(1)} • 10-15 min',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _menuCard(Menu m, {bool allowAdd = true}) {
     final count = itemCounts[m.name] ?? 0;
+    final isNetworkImage = m.image.startsWith('http');
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -811,7 +1092,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Area
           Expanded(
             flex: 5,
             child: Stack(
@@ -822,18 +1102,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: SizedBox(
                     width: double.infinity,
-                    height: double.infinity,
-                    child: Image.asset(
-                      m.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[100],
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
+                    child: isNetworkImage
+                        ? Image.network(
+                            m.image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: Colors.grey[100]),
+                          )
+                        : Image.asset(
+                            m.image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: Colors.grey[100]),
+                          ),
                   ),
                 ),
                 if (count > 0)
@@ -859,7 +1140,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // Info Area
           Expanded(
             flex: 4,
             child: Padding(
@@ -892,8 +1172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-
-                  // Action Button
                   SizedBox(
                     width: double.infinity,
                     child: count == 0
@@ -914,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : ElevatedButton(
                                   onPressed: () {
-                                    // Navigation Logic specific to Landing
+                                    // Logic Navigasi jika di Home
                                     Kantin? parent;
                                     for (final k in kantinList) {
                                       if (k.menus.any(
@@ -938,9 +1216,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                     foregroundColor: Colors.black87,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
                                     ),
                                   ),
                                   child: const Text('Lihat'),
@@ -980,140 +1255,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // -----------------------
-  // SEARCH RESULTS
-  // -----------------------
-  Widget _buildSearchResults(String q) {
-    final qLower = q.toLowerCase();
-    final matchingKantins = kantinList
-        .where((k) => k.name.toLowerCase().contains(qLower))
-        .toList();
-
-    if (activeKantin != null) {
-      final filtered = activeKantin!.menus
-          .where((m) => m.name.toLowerCase().contains(qLower))
-          .toList();
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pencarian di "${activeKantin!.name}"',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
-            ),
-            Text(
-              '"$q"',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (filtered.isEmpty)
-              _emptyState('Tidak ada menu yang cocok.')
-            else
-              _buildGridSection('Hasil Menu', filtered),
-          ],
-        ),
-      );
-    }
-
-    // Global Search
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hasil Pencarian',
-            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
-          ),
-          Text(
-            '"$q"',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          if (matchingKantins.isNotEmpty) ...[
-            Text(
-              'Kantin Ditemukan',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 180,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: matchingKantins.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, i) {
-                  final k = matchingKantins[i];
-                  return InkWell(
-                    onTap: () => setState(() {
-                      activeKantin = k;
-                      searchQuery = '';
-                    }),
-                    child: Container(
-                      width: 240,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(12),
-                              ),
-                              child: Image.asset(
-                                k.image,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text(
-                              k.name,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
-
-          if (matchingKantins.isEmpty)
-            _emptyState('Tidak ada hasil yang cocok.'),
-        ],
-      ),
-    );
-  }
-
   Widget _emptyState(String msg) {
     return Center(
       child: Padding(
@@ -1133,103 +1274,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // -----------------------
-  // ABOUT / PROFILE
-  // -----------------------
-  Widget _buildAbout() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-      child: Column(
-        children: [
-          Image.asset(
-            'assets/logo.png',
-            height: 80,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.fastfood, size: 80, color: terracotta),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Nesa Food',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text('v1.0.0', style: GoogleFonts.poppins(color: Colors.grey)),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(24),
-            constraints: const BoxConstraints(maxWidth: 600),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Tentang Kami',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Nesa Food memudahkan mahasiswa dan staf Baseball UNESA5 untuk memesan makanan dari kantin tanpa antri. Nikmati kemudahan bertransaksi dan hemat waktumu.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    height: 1.6,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 24),
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: terracottaLight,
-                    child: Icon(Icons.code, color: terracotta),
-                  ),
-                  title: Text(
-                    'Developer',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    'Dicky Sanjaya Putra',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ),
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: terracottaLight,
-                    child: Icon(Icons.email, color: terracotta),
-                  ),
-                  title: Text(
-                    'Kontak',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    'dickysanjayaputra2101@gmail.com',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- SHARED WIDGETS ---
-
   Widget _sectionHeaderWithBack({
     required String title,
     String? subtitle,
@@ -1237,23 +1281,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Row(
       children: [
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onBack,
-            borderRadius: BorderRadius.circular(50),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 18,
-                color: Colors.black87,
-              ),
+        InkWell(
+          onTap: onBack,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18,
+              color: Colors.black87,
             ),
           ),
         ),
@@ -1265,7 +1306,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               style: GoogleFonts.poppins(
                 fontSize: 22,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),

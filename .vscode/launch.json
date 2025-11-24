@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "NesaFood Web (Port 5000)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--web-port",
+                "5000",
+                "--web-hostname",
+                "localhost"
+            ]
+        }
+    ]
+}
