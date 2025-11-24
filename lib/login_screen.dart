@@ -28,14 +28,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state.isSuccess) {
-<<<<<<< HEAD
-            // Ini menggunakan rute /home (yang butuh 'home_screen.dart')
-            final user = state.fullName ?? emailController.text.trim();
-=======
             final user = emailController.text.trim().isEmpty
                 ? 'User'
                 : emailController.text.trim();
->>>>>>> c044fbc6704511afb586badd75e66f0b39793a00
             context.go('/home', extra: user);
           }
           if (state.isAdminSuccess) {

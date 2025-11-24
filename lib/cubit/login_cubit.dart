@@ -9,12 +9,7 @@ class LoginState {
   final bool isAdminSuccess;
   final String? error;
   final String? userId;
-<<<<<<< HEAD
-  final String? fullName;
-  final String? kantinId; // Data khusus admin
-=======
   final String? kantinId;
->>>>>>> c044fbc6704511afb586badd75e66f0b39793a00
 
   LoginState({
     this.isLoading = false,
@@ -39,22 +34,7 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final user = await _authService.signIn(email, password);
       if (user != null) {
-<<<<<<< HEAD
-        // Jika berhasil login Auth, ambil data user dari Firestore untuk mendapatkan nama lengkap
-        String? name;
-        try {
-          final doc = await _authService.getUserData(user.uid);
-          final data = doc.data() as Map<String, dynamic>?;
-          name = data != null ? (data['nama'] as String?) : null;
-        } catch (_) {
-          name = user.displayName;
-        }
-
-        // Jika berhasil login Auth, langsung dianggap SUKSES dan sertakan fullName bila ada.
-        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
-=======
         emit(LoginState(isSuccess: true, userId: user.uid));
->>>>>>> c044fbc6704511afb586badd75e66f0b39793a00
       } else {
         emit(LoginState(error: "Login gagal."));
       }
@@ -125,12 +105,7 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final user = await _authService.signUpUser(email, password, name);
       if (user != null) {
-<<<<<<< HEAD
-        // Register sukses langsung masuk
-        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
-=======
         emit(LoginState(isSuccess: true, userId: user.uid));
->>>>>>> c044fbc6704511afb586badd75e66f0b39793a00
       } else {
         emit(LoginState(error: "Registrasi gagal"));
       }
