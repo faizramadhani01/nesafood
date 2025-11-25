@@ -28,14 +28,23 @@ class _LoginScreenState extends State<LoginScreen> {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state.isSuccess) {
-            final user = emailController.text.trim().isEmpty
-                ? 'User'
-                : emailController.text.trim();
+            // --- PERBAIKAN UTAMA (FIX RANGE ERROR) ---
+            String user = emailController.text.trim();
+
+            // Jika login via Google, emailController pasti kosong.
+            // Kita beri nama default agar aplikasi tidak crash saat ambil inisial.
+            if (user.isEmpty) {
+              user = "Google User";
+            }
+
             context.go('/home', extra: user);
+            // -----------------------------------------
           }
+
           if (state.isAdminSuccess) {
             context.go('/admin-dashboard', extra: state.kantinId);
           }
+
           if (state.error != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -107,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
 
+                          // Toggle User/Admin
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -122,6 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
 
+                          // Email & Password
                           _buildTextField(
                             controller: emailController,
                             hint: 'Email Address',
@@ -151,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
 
+                          // Login Button
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -202,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const SizedBox(height: 24),
 
-                          // --- BAGIAN SOCIAL LOGIN ---
+                          // --- SOCIAL LOGIN ---
                           if (_loginType == LoginType.user) ...[
                             Row(
                               children: [
@@ -230,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // TOMBOL GOOGLE DIPERBAIKI
+                                // Tombol Google dengan onTap yang benar
                                 _socialButton(
                                   'assets/google.png',
                                   onTap: () {
@@ -238,15 +250,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 const SizedBox(width: 20),
-                                // Facebook Placeholder
                                 _socialButton(
                                   'assets/facebook.png',
                                   onTap: () {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text(
-                                          "Fitur Facebook Coming Soon!",
-                                        ),
+                                        content: Text("Segera Hadir!"),
                                       ),
                                     );
                                   },
@@ -372,7 +381,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Widget Helper: Tombol Sosial Media (Diupdate dengan onTap)
+  // Widget Helper: Tombol Sosial Media (Wajib ada onTap)
   Widget _socialButton(String assetPath, {required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,

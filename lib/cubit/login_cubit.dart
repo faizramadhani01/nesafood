@@ -5,12 +5,11 @@ import '../admin/service/admin_auth_service.dart';
 
 class LoginState {
   final bool isLoading;
-  final bool isSuccess;
-  final bool isAdminSuccess;
+  final bool isSuccess; // Sukses Login User
+  final bool isAdminSuccess; // Sukses Login Admin
   final String? error;
   final String? userId;
-  final String? fullName;
-  final String? kantinId;
+  final String? kantinId; // Data khusus admin
 
   LoginState({
     this.isLoading = false,
@@ -18,7 +17,6 @@ class LoginState {
     this.isAdminSuccess = false,
     this.error,
     this.userId,
-    this.fullName,
     this.kantinId,
   });
 }
@@ -29,23 +27,32 @@ class LoginCubit extends Cubit<LoginState> {
 
   LoginCubit() : super(LoginState());
 
-  // --- LOGIN EMAIL ---
+  // --- LOGIN GOOGLE (BARU) ---
+  Future<void> loginGoogle() async {
+    emit(LoginState(isLoading: true));
+    try {
+      // Panggil logika pintar di AuthService
+      final user = await _authService.signInWithGoogle();
+
+      if (user != null) {
+        // Sukses! (Entah itu user baru atau lama, AuthService sudah mengurusnya)
+        emit(LoginState(isSuccess: true, userId: user.uid));
+      } else {
+        // User membatalkan login (klik silang di popup)
+        emit(LoginState(isLoading: false));
+      }
+    } catch (e) {
+      emit(LoginState(error: "Gagal Login Google: ${e.toString()}"));
+    }
+  }
+
+  // --- LOGIN USER (EMAIL MANUAL) ---
   Future<void> login(String email, String password) async {
     emit(LoginState(isLoading: true));
     try {
       final user = await _authService.signIn(email, password);
       if (user != null) {
-        // Try to fetch user's full name from Firestore 'users' collection
-        String? name;
-        try {
-          final doc = await _authService.getUserData(user.uid);
-          final data = doc.data() as Map<String, dynamic>?;
-          name = data != null ? (data['nama'] as String?) : null;
-        } catch (_) {
-          name = user.displayName;
-        }
-
-        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
+        emit(LoginState(isSuccess: true, userId: user.uid));
       } else {
         emit(LoginState(error: "Login gagal."));
       }
@@ -55,46 +62,20 @@ class LoginCubit extends Cubit<LoginState> {
           e.code == 'invalid-credential') {
         emit(LoginState(error: "Email atau password salah"));
       } else {
-        emit(LoginState(error: "Error Auth: ${e.message}"));
+        emit(LoginState(error: "Error Auth: ${e.message ?? e.code}"));
       }
     } catch (e) {
       emit(LoginState(error: "Terjadi kesalahan: ${e.toString()}"));
     }
   }
 
-  // --- LOGIN GOOGLE (BARU) ---
-  Future<void> loginGoogle() async {
-    emit(LoginState(isLoading: true));
-    try {
-      final user = await _authService.signInWithGoogle();
-      if (user != null) {
-        // Login Google sukses, ambil nama dari firestore jika tersedia
-        String? name;
-        try {
-          final doc = await _authService.getUserData(user.uid);
-          final data = doc.data() as Map<String, dynamic>?;
-          name = data != null ? (data['nama'] as String?) : null;
-        } catch (_) {
-          name = user.displayName;
-        }
-
-        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
-      } else {
-        // User membatalkan login (tekan back saat pilih akun)
-        // Kita kembalikan state ke awal (tidak loading, tidak error)
-        emit(LoginState(isLoading: false));
-      }
-    } catch (e) {
-      emit(LoginState(error: "Gagal Login Google: ${e.toString()}"));
-    }
-  }
-
-  // --- LOGIN ADMIN ---
+  // --- LOGIN ADMIN (MANUAL) ---
   Future<void> loginAdmin(String email, String password) async {
     emit(LoginState(isLoading: true));
     try {
       final user = await _adminAuthService.signInAdmin(email, password);
       if (user != null) {
+        // Validasi Role Admin
         final doc = await _adminAuthService.getAdminData(user.uid);
         final data = doc.data() as Map<String, dynamic>?;
 
@@ -113,21 +94,29 @@ class LoginCubit extends Cubit<LoginState> {
         emit(LoginState(error: "Login admin gagal."));
       }
     } on FirebaseAuthException catch (e) {
-      emit(LoginState(error: "Error Auth: ${e.message}"));
+      emit(LoginState(error: "Error Auth: ${e.message ?? e.code}"));
     } catch (e) {
       emit(LoginState(error: "Error Data: ${e.toString()}"));
     }
   }
 
-  // --- REGISTER ---
+  // --- REGISTER USER (MANUAL) ---
   Future<void> register(String email, String password, String name) async {
     emit(LoginState(isLoading: true));
     try {
       final user = await _authService.signUpUser(email, password, name);
       if (user != null) {
-        emit(LoginState(isSuccess: true, userId: user.uid, fullName: name));
+        emit(LoginState(isSuccess: true, userId: user.uid));
       } else {
         emit(LoginState(error: "Registrasi gagal"));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        emit(LoginState(error: "Email sudah terdaftar."));
+      } else if (e.code == 'weak-password') {
+        emit(LoginState(error: "Password terlalu lemah."));
+      } else {
+        emit(LoginState(error: "Register Error: ${e.message}"));
       }
     } catch (e) {
       emit(LoginState(error: "Registrasi gagal: ${e.toString()}"));
