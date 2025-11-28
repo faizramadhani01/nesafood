@@ -1,28 +1,31 @@
-// lib/main.dart
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+// Pages
 import 'splash_screen.dart';
 import 'login_screen.dart';
-import 'signin_screen.dart';
+import 'signin_screen.dart'; // Register Manual
+import 'pages/complete_profile_screen.dart'; // Register Google (Baru)
 import 'pages/home_screen.dart';
 import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
 import 'pages/settings_screen.dart';
 import 'pages/order_history_screen.dart';
 import 'profile_panel_screen.dart';
+import 'pages/my_profile_screen.dart';
+import 'admin/dashboard_admin_screen.dart';
+
+// Models
 import 'model/menu.dart';
 import 'model/order.dart';
-import 'pages/my_profile_screen.dart';
-import 'admin/dashboard_admin_screen.dart'; // Pastikan import ini ada
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
-    // Menggunakan konfigurasi yang Anda berikan
     await Firebase.initializeApp(
       options: const FirebaseOptions(
         apiKey: "AIzaSyCSXSyY0XjTRzGjuEhFsrbWaVdx6hCjQpA",
@@ -35,7 +38,6 @@ void main() async {
       ),
     );
   } else {
-    // Untuk platform lain (Android/iOS)
     await Firebase.initializeApp();
   }
   runApp(
@@ -55,7 +57,20 @@ final GoRouter _router = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+
+    // Rute Register Manual
     GoRoute(path: '/signin', builder: (context, state) => const SignUpScreen()),
+
+    // Rute Khusus: Melengkapi Data User Google Baru
+    GoRoute(
+      path: '/complete-profile',
+      builder: (context, state) {
+        // Data User dari Google Auth dibawa ke sini
+        final googleUser = state.extra as User;
+        return CompleteProfileScreen(googleUser: googleUser);
+      },
+    ),
+
     GoRoute(
       path: '/home',
       builder: (context, state) {
@@ -66,8 +81,8 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/detail/:menuId',
       builder: (context, state) => DetailMenuScreen(
-        menu: Menu.placeholder(),
-      ), // Placeholder, perlu diubah
+        menu: Menu.placeholder(), // Nanti diganti real data
+      ),
     ),
     GoRoute(
       path: '/cart',
@@ -76,44 +91,38 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/profile',
       builder: (context, state) =>
-          ProfilePanel(username: 'User', onClose: () {}), // Placeholder
+          ProfilePanel(username: 'User', onClose: () {}),
     ),
+
+    // FIX: MyProfileScreen tidak perlu parameter lagi
     GoRoute(
       path: '/my-profile',
       builder: (context, state) {
-        final username = state.extra as String? ?? 'Guest';
-        return MyProfileScreen(username: username);
+        return const MyProfileScreen();
       },
     ),
 
-    // 4. TAMBAHKAN RUTE UNTUK HALAMAN PENGATURAN AKUN
     GoRoute(
       path: '/settings',
       builder: (context, state) {
-        final username = state.extra as String? ?? 'Guest';
+        final username = state.extra as String? ?? 'User';
         return SettingsScreen(username: username);
       },
     ),
-
-    // 5. TAMBAHKAN RUTE UNTUK HALAMAN RIWAYAT PESANAN
     GoRoute(
       path: '/order-history',
       builder: (context, state) {
         final extra = state.extra;
         if (extra is List<Order>) {
-          // If caller passed a List<Order>, show them in the history
           return OrderHistoryScreen(username: 'Guest', initialOrders: extra);
         }
         final username = extra as String? ?? 'Guest';
         return OrderHistoryScreen(username: username);
       },
     ),
-
-    // Rute untuk Admin Dashboard
     GoRoute(
       path: '/admin-dashboard',
       builder: (context, state) {
-        // Ambil kantinId dari 'extra'
         final kantinId = state.extra as String? ?? '';
         return DashboardAdminScreen(kantinId: kantinId);
       },

@@ -1,101 +1,145 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // ===============================
-  // 🔥 LOGIN GOOGLE KHUSUS WEB
-  // ===============================
-  Future<User?> signInWithGoogle() async {
-    try {
-      // Provider khusus untuk login Google di Web
-      final googleProvider = GoogleAuthProvider();
-      googleProvider.addScope('email');
-
-      // Sign in menggunakan POPUP (WAJIB untuk Web)
-      final UserCredential userCredential = await _auth.signInWithPopup(
-        googleProvider,
-      );
-
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Cek apakah user sudah ada di Firestore
-        final DocumentSnapshot userDoc = await _db
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        if (!userDoc.exists) {
-          // Jika user baru → buat data otomatis
-          await _db.collection('users').doc(user.uid).set({
-            'email': user.email,
-            'nama': user.displayName ?? 'Google User',
-            'role': 'user',
-            'kantinId': null,
-            'photoUrl': user.photoURL,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        }
-
-        return user;
-      }
-
-      return null;
-    } catch (e) {
-      print("Error Google Sign In WEB: $e");
-      rethrow;
-    }
-  }
-
-  // ===============================
-  // 🔥 LOGIN EMAIL & PASSWORD
-  // ===============================
-
-  Future<User?> signIn(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return credential.user;
-  }
-
-  // ===============================
-  // 🔥 REGISTER EMAIL
-  // ===============================
-
+  // --- REGISTER MANUAL (DENGAN VERIFIKASI) ---
   Future<User?> signUpUser(String email, String password, String name) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-
+    
+    // 1. Simpan data user
     await _db.collection('users').doc(credential.user!.uid).set({
       'email': email,
       'nama': name,
       'role': 'user',
       'kantinId': null,
+      'phone': '', 
+      'photoUrl': null,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    
+    await credential.user!.updateDisplayName(name);
+
+    // 2. KIRIM EMAIL VERIFIKASI (WAJIB)
+    if (credential.user != null && !credential.user!.emailVerified) {
+      await credential.user!.sendEmailVerification();
+    }
 
     return credential.user;
   }
 
-  // ===============================
-  // 🔥 SIGN OUT
-  // ===============================
+  // --- LOGIN MANUAL (DENGAN CEK VERIFIKASI) ---
+  Future<User?> signIn(String email, String password) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-  Future<void> signOut() async {
-    await _auth.signOut();
+    // Cek apakah email sudah diverifikasi?
+    if (credential.user != null) {
+      if (!credential.user!.emailVerified) {
+        // Jika belum, logout paksa & lempar error
+        await _auth.signOut();
+        throw FirebaseAuthException(
+          code: 'email-not-verified',
+          message: 'Email belum diverifikasi. Silakan cek inbox email Anda.',
+        );
+      }
+    }
+
+    return credential.user;
   }
 
-  // ===============================
-  // 🔥 GET USER DATA
-  // ===============================
+  // --- LOGIN GOOGLE ---
+  Future<User?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
 
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
+    } catch (e) {
+      print("Error Google Sign In: $e");
+      rethrow;
+    }
+  }
+
+  // --- CEK STATUS USER ---
+  Future<bool> isUserRegistered(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    return doc.exists;
+  }
+
+  // --- FINALISASI DATA GOOGLE ---
+  Future<void> finalizeRegistration({
+    required String uid,
+    required String email,
+    required String name,
+    required String phone,
+    required String password,
+    String? photoUrl,
+  }) async {
+    await _db.collection('users').doc(uid).set({
+      'email': email,
+      'nama': name,
+      'phone': phone,
+      'role': 'user',
+      'kantinId': null,
+      'photoUrl': photoUrl,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    if (password.isNotEmpty) {
+      await _auth.currentUser?.updatePassword(password);
+    }
+    
+    await _auth.currentUser?.updateDisplayName(name);
+  }
+
+  // --- SIGN OUT ---
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
+  }
+  
+  // --- GET USER DATA ---
   Future<DocumentSnapshot> getUserData(String uid) async {
     return await _db.collection('users').doc(uid).get();
+  }
+
+  // --- UPDATE PROFILE ---
+  Future<void> updateUserProfile(String uid, String name, String phone) async {
+    await _db.collection('users').doc(uid).update({
+      'nama': name,
+      'phone': phone,
+    });
+    await _auth.currentUser?.updateDisplayName(name);
+  }
+
+  // --- UPLOAD FOTO ---
+  Future<String> uploadProfileImage(String uid, File imageFile) async {
+    final ref = _storage.ref().child('profile_images').child('$uid.jpg');
+    await ref.putFile(imageFile);
+    final url = await ref.getDownloadURL();
+    
+    await _db.collection('users').doc(uid).update({'photoUrl': url});
+    await _auth.currentUser?.updatePhotoURL(url);
+    return url;
   }
 }

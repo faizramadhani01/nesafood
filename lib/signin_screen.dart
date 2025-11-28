@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
-import 'cubit/login_cubit.dart';
-// import 'login_screen.dart'; // <-- Tidak perlu, kita pakai GoRouter
+import 'services/auth_service.dart';
 import 'theme.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -19,332 +17,228 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
+
   bool _obscure = true;
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
-    _confirmCtrl.dispose();
     super.dispose();
   }
 
-  // --- Fungsi _submit() demo telah dihapus ---
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // 1. Register Manual
+      await _authService.signUpUser(
+        _emailCtrl.text.trim(),
+        _passwordCtrl.text.trim(),
+        _nameCtrl.text.trim(),
+      );
+
+      if (mounted) {
+        // 2. Tampilkan Dialog Verifikasi
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text("Verifikasi Email"),
+            content: Text(
+              "Link verifikasi telah dikirim ke ${_emailCtrl.text}.\n\nSilakan buka email Anda dan klik link tersebut untuk mengaktifkan akun sebelum login.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.go('/login'); // Kembali ke Login
+                },
+                child: const Text("OK, Mengerti"),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => LoginCubit(),
-      child: BlocConsumer<LoginCubit, LoginState>(
-        listener: (context, state) {
-          if (state.isSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Registrasi berhasil! Silakan login.'),
-              ),
-            );
-            context.go('/login'); // Kembali ke login
-          }
-          if (state.error != null) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.error!)));
-          }
-        },
-        builder: (context, state) {
-          const terracotta = NesaColors.terracotta;
-          return Scaffold(
-            body: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  'assets/image.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const ColoredBox(color: Colors.grey),
+    return Scaffold(
+      backgroundColor: NesaColors.background,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/image.png',
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(color: Colors.grey),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40,
+                  horizontal: 24,
                 ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 80.w), // Responsif
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 9.h, // Responsif
-                        horizontal: 8.w, // Responsif
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.65),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Buat Akun",
+                        style: GoogleFonts.poppins(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.60),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 24,
-                            offset: Offset(0, 12),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Daftar untuk mulai memesan",
+                        style: GoogleFonts.poppins(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _buildTextField(
+                        controller: _nameCtrl,
+                        hint: "Nama Lengkap",
+                        icon: Icons.person,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _emailCtrl,
+                        hint: "Email",
+                        icon: Icons.email,
+                        // Validasi Email Sederhana
+                        validator: (v) => (v != null && !v.contains('@'))
+                            ? "Format email salah"
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _passwordCtrl,
+                        hint: "Password",
+                        icon: Icons.lock,
+                        isPassword: true,
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleRegister,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: NesaColors.terracotta,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  "DAFTAR",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Sudah punya akun? ",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          GestureDetector(
+                            onTap: () => context.go('/login'),
+                            child: Text(
+                              "Login",
+                              style: TextStyle(
+                                color: NesaColors.terracotta,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      child: SingleChildScrollView(
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Create Account',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Register to start ordering',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Name
-                              TextFormField(
-                                controller: _nameCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                textInputAction: TextInputAction.next,
-                                decoration: InputDecoration(
-                                  hintText: 'Full name',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withOpacity(0.06),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.person,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                validator: (v) =>
-                                    (v == null || v.trim().isEmpty)
-                                    ? 'Nama wajib diisi'
-                                    : null,
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Email
-                              TextFormField(
-                                controller: _emailCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                decoration: InputDecoration(
-                                  hintText: 'Email',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withOpacity(0.06),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.email,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                validator: (v) {
-                                  if (v == null || v.trim().isEmpty) {
-                                    return 'Email wajib diisi';
-                                  }
-                                  final emailRe = RegExp(
-                                    r'^[^@]+@[^@]+\.[^@]+',
-                                  );
-                                  if (!emailRe.hasMatch(v.trim())) {
-                                    return 'Format email tidak valid';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Password
-                              TextFormField(
-                                controller: _passwordCtrl,
-                                obscureText: _obscure,
-                                style: const TextStyle(color: Colors.white),
-                                textInputAction: TextInputAction.next,
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withOpacity(0.06),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.lock,
-                                    color: Colors.white70,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscure
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: Colors.white70,
-                                    ),
-                                    onPressed: () =>
-                                        setState(() => _obscure = !_obscure),
-                                  ),
-                                ),
-                                validator: (v) {
-                                  if (v == null || v.isEmpty) {
-                                    return 'Password wajib diisi';
-                                  }
-                                  if (v.length < 6) {
-                                    return 'Minimal 6 karakter';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Confirm
-                              TextFormField(
-                                controller: _confirmCtrl,
-                                obscureText: _obscure,
-                                style: const TextStyle(color: Colors.white),
-                                textInputAction: TextInputAction.done,
-                                decoration: InputDecoration(
-                                  hintText: 'Confirm password',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white70,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withOpacity(0.06),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                validator: (v) {
-                                  if (v == null || v.isEmpty) {
-                                    return 'Konfirmasi password wajib';
-                                  }
-                                  if (v != _passwordCtrl.text) {
-                                    return 'Password tidak cocok';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 18),
-
-                              // Sign Up button
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: state.isLoading
-                                      ? null
-                                      : () {
-                                          // Validasi form sebelum register
-                                          if (_formKey.currentState!
-                                              .validate()) {
-                                            context.read<LoginCubit>().register(
-                                              _emailCtrl.text.trim(),
-                                              _passwordCtrl.text.trim(),
-                                              _nameCtrl.text.trim(),
-                                            );
-                                          }
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: terracotta,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                  ),
-                                  child: state.isLoading
-                                      ? const CircularProgressIndicator()
-                                      : Text(
-                                          'SIGN UP',
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  TextButton(
-                                    onPressed: () => context.go('/login'),
-                                    child: Text(
-                                      'Already have an account?',
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        onPressed: () {},
-                                        icon: Image.asset(
-                                          'assets/google.png',
-                                          width: 28,
-                                          height: 28,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(
-                                                Icons.error,
-                                                color: Colors.white,
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IconButton(
-                                        onPressed: () {},
-                                        icon: Image.asset(
-                                          'assets/facebook.png',
-                                          width: 28,
-                                          height: 28,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(
-                                                Icons.error,
-                                                color: Colors.white,
-                                              ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword && _obscure,
+      style: const TextStyle(color: Colors.white),
+      validator:
+          validator ??
+          (val) => (val == null || val.isEmpty) ? "Wajib diisi" : null,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white60),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        prefixIcon: Icon(icon, color: Colors.white70),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white70,
+                ),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              )
+            : null,
       ),
     );
   }

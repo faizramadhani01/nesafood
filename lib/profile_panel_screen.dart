@@ -1,93 +1,165 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // <-- 1. IMPORT DITAMBAHKAN
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'services/auth_service.dart';
+import 'theme.dart';
 
 class ProfilePanel extends StatelessWidget {
   final String username;
   final VoidCallback onClose;
 
   const ProfilePanel({
+    super.key,
     required this.username,
     required this.onClose,
-    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 800;
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(24),
-      color: Colors.transparent,
-      child: Container(
-        width: isMobile ? 220 : 240,
-        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    // Inisial untuk avatar
+    final initials = username.isNotEmpty ? username.substring(0, 1).toUpperCase() : 'U';
+
+    return Container(
+      width: 280,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Profil Singkat
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: NesaColors.terracottaLight,
+                child: Text(
+                  initials,
+                  style: GoogleFonts.poppins(
+                    color: NesaColors.terracotta,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      username,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      'Mahasiswa', // Bisa diganti role
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: onClose,
+                icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+              )
+            ],
+          ),
+          const Divider(height: 24),
+
+          // Menu Items
+          _buildMenuItem(
+            context,
+            icon: Icons.person_outline,
+            text: 'Profil Saya',
+            onTap: () {
+              // Gunakan PUSH agar ada tombol back otomatis
+              context.push('/my-profile'); 
+              onClose();
+            },
+          ),
+          _buildMenuItem(
+            context,
+            icon: Icons.history,
+            text: 'Riwayat Pesanan',
+            onTap: () {
+              context.push('/order-history', extra: username);
+              onClose();
+            },
+          ),
+          _buildMenuItem(
+            context,
+            icon: Icons.settings_outlined,
+            text: 'Pengaturan Akun',
+            onTap: () {
+              context.push('/settings');
+              onClose();
+            },
+          ),
+          
+          const Divider(height: 24),
+          
+          _buildMenuItem(
+            context,
+            icon: Icons.logout,
+            text: 'Keluar',
+            textColor: Colors.red,
+            iconColor: Colors.red,
+            onTap: () async {
+              // Logika Logout
+              await AuthService().signOut();
+              if (context.mounted) {
+                context.go('/login'); // Go mengganti rute (tidak bisa back)
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        child: Row(
           children: [
-            // Foto profil
-            CircleAvatar(
-              radius: isMobile ? 32 : 36,
-              backgroundImage: AssetImage(
-                'assets/profile.png',
-              ), // Ganti sesuai asset
-            ),
-            const SizedBox(height: 12),
+            Icon(icon, size: 20, color: iconColor ?? Colors.black87),
+            const SizedBox(width: 12),
             Text(
-              username,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: isMobile ? 16 : 18,
+              text,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: textColor ?? Colors.black87,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 18),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.account_circle),
-              title: Text('Profil Saya'),
-              onTap: () {
-                // 2. BAGIAN INI DIUBAH
-                // Tutup panel
-                onClose();
-                // Navigasi ke halaman detail profil baru
-                context.go('/my-profile', extra: username);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Pengaturan Akun'),
-              onTap: () {
-                onClose(); // Tutup panel
-                // Navigasi ke halaman pengaturan akun
-                context.go('/settings', extra: username);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.history),
-              title: Text('Riwayat Pesanan'),
-              onTap: () {
-                onClose(); // Tutup panel
-                // Navigasi ke halaman riwayat pesanan
-                context.go('/order-history', extra: username);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Logout'),
-              onTap: () {
-                // 3. MENGGUNAKAN GO_ROUTER UNTUK LOGOUT
-                context.go('/login');
-              },
-            ),
-            const SizedBox(height: 8),
-            IconButton(
-              icon: Icon(Icons.close),
-              onPressed: onClose,
-              tooltip: 'Tutup',
-            ),
+            const Spacer(),
+            Icon(Icons.chevron_right, size: 16, color: Colors.grey.shade400),
           ],
         ),
       ),

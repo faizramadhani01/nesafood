@@ -1,235 +1,120 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart'; // Untuk tombol back manual jika perlu
+import '../theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String username;
-
-  const SettingsScreen({
-    required this.username,
-    super.key,
-  });
+  const SettingsScreen({super.key, required this.username});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late String _email;
-  late String _phone;
-  late bool _notificationsEnabled;
-
-  @override
-  void initState() {
-    super.initState();
-    // Nilai default pengaturan
-    _email = widget.username;
-    _phone = '';
-    _notificationsEnabled = true;
-  }
+  bool _notifEnabled = true;
+  bool _darkMode = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: NesaColors.background,
       appBar: AppBar(
-        title: const Text('Pengaturan Akun'),
+        title: Text('Pengaturan', style: GoogleFonts.poppins(color: Colors.black87, fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.white,
+        elevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => context.pop(), // Kembali ke Home tanpa logout
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Bagian Informasi Akun
-            const SizedBox(height: 16),
-            const Text(
-              'Informasi Akun',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Email
-            TextField(
-              controller: TextEditingController(text: _email),
-              enabled: false,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                prefixIcon: const Icon(Icons.email),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Colors.grey[200],
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Nomor Telepon
-            TextField(
-              onChanged: (value) {
-                setState(() {
-                  _phone = value;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: 'Nomor Telepon',
-                hintText: 'Masukkan nomor telepon Anda',
-                prefixIcon: const Icon(Icons.phone),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // Bagian Preferensi
-            const Text(
-              'Preferensi',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Notifikasi
-            ListTile(
-              title: const Text('Notifikasi Pesanan'),
-              subtitle: const Text('Terima pemberitahuan untuk pesanan'),
-              trailing: Switch(
-                value: _notificationsEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _notificationsEnabled = value;
-                  });
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // Tombol Simpan
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Pengaturan berhasil disimpan!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Simpan Perubahan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Tombol Ubah Password
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  _showChangePasswordDialog(context);
-                },
-                child: const Text(
-                  'Ubah Password',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildSectionHeader('Preferensi'),
+          _buildSwitchTile(
+            'Notifikasi Pesanan',
+            'Dapatkan update status pesanan',
+            _notifEnabled,
+            (v) => setState(() => _notifEnabled = v),
+          ),
+          _buildSwitchTile(
+            'Mode Gelap',
+            'Tampilan aplikasi gelap',
+            _darkMode,
+            (v) => setState(() => _darkMode = v),
+          ),
+          
+          const SizedBox(height: 24),
+          _buildSectionHeader('Tentang'),
+          _buildActionTile(Icons.info_outline, 'Versi Aplikasi', '1.0.0', () {}),
+          _buildActionTile(Icons.privacy_tip_outlined, 'Kebijakan Privasi', '', () {}),
+          _buildActionTile(Icons.help_outline, 'Bantuan & Support', '', () {}),
+          
+          const SizedBox(height: 24),
+          _buildSectionHeader('Akun'),
+           _buildActionTile(
+            Icons.delete_forever, 
+            'Hapus Akun', 
+            '', 
+            () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Fitur hapus akun permanen akan segera hadir.')),
+              );
+            },
+            isDestructive: true
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: NesaColors.terracotta,
         ),
       ),
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ubah Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password Lama',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password Baru',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Konfirmasi Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ],
+  Widget _buildSwitchTile(String title, String subtitle, bool value, ValueChanged<bool> onChanged) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+      child: SwitchListTile(
+        value: value,
+        onChanged: onChanged,
+        activeColor: NesaColors.terracotta,
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+      ),
+    );
+  }
+
+  Widget _buildActionTile(IconData icon, String title, String trailing, VoidCallback onTap, {bool isDestructive = false}) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(icon, color: isDestructive ? Colors.red : Colors.grey[700]),
+        title: Text(
+          title, 
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            color: isDestructive ? Colors.red : Colors.black87
+          )
         ),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password berhasil diubah!'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-              context.pop();
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
+        trailing: trailing.isEmpty 
+            ? const Icon(Icons.chevron_right, color: Colors.grey)
+            : Text(trailing, style: GoogleFonts.poppins(color: Colors.grey)),
       ),
     );
   }
