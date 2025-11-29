@@ -43,7 +43,7 @@ dependencies:
   intl: ^0.20.2
   pdf: ^3.10.1
   printing: ^5.10.0
-  http: ^1.1.0              # Untuk API TheMealDB
+  dio: ^5.0.0            # Untuk API TheMealDB
 
   # Firebase & Auth
   firebase_core: ^4.2.1
