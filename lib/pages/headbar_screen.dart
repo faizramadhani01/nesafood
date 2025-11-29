@@ -29,12 +29,12 @@ class HeadBar extends StatefulWidget implements PreferredSizeWidget {
   State<HeadBar> createState() => _HeadBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(70.0); // Sedikit lebih ramping
+  Size get preferredSize => const Size.fromHeight(70.0);
 }
 
 class _HeadBarState extends State<HeadBar> {
   late final TextEditingController _ctrl;
-  bool _isMobileSearchActive = false; // State untuk mode pencarian di HP
+  bool _isMobileSearchActive = false;
 
   @override
   void initState() {
@@ -64,7 +64,6 @@ class _HeadBarState extends State<HeadBar> {
     setState(() {
       _isMobileSearchActive = !_isMobileSearchActive;
       if (!_isMobileSearchActive) {
-        // Jika menutup search, clear text
         _ctrl.clear();
         if (widget.onSearch != null) widget.onSearch!('');
       }
@@ -75,9 +74,7 @@ class _HeadBarState extends State<HeadBar> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Breakpoint mobile/tablet vs Desktop
         final isMobile = constraints.maxWidth <= 900;
-
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -101,11 +98,9 @@ class _HeadBarState extends State<HeadBar> {
     );
   }
 
-  // --- LAYOUT UNTUK DESKTOP (Layar Lebar) ---
   Widget _buildDesktopLayout() {
     return Row(
       children: [
-        // 1. Logo Area
         SizedBox(
           height: 40,
           child: Image.asset(
@@ -122,8 +117,6 @@ class _HeadBarState extends State<HeadBar> {
           ),
         ),
         const SizedBox(width: 32),
-
-        // 2. Menu Navigation (Teks)
         _MenuButton(
           label: 'Home',
           selected: widget.selectedIndex == 0,
@@ -141,14 +134,9 @@ class _HeadBarState extends State<HeadBar> {
           selected: widget.selectedIndex == 2,
           onTap: () => widget.onMenuTap(2),
         ),
-
         const Spacer(),
-
-        // 3. Search Bar Panjang
         SizedBox(width: 280, child: _buildSearchField(isExpanded: true)),
         const SizedBox(width: 24),
-
-        // 4. Cart & Profile
         _buildCartButton(),
         const SizedBox(width: 16),
         _buildProfileButton(),
@@ -156,9 +144,7 @@ class _HeadBarState extends State<HeadBar> {
     );
   }
 
-  // --- LAYOUT UNTUK MOBILE (Layar Sempit) ---
   Widget _buildMobileLayout() {
-    // Jika mode pencarian aktif di HP, tampilkan Search Bar full width
     if (_isMobileSearchActive) {
       return Row(
         children: [
@@ -170,11 +156,8 @@ class _HeadBarState extends State<HeadBar> {
         ],
       );
     }
-
-    // Tampilan Normal Mobile
     return Row(
       children: [
-        // Logo Saja
         SizedBox(
           height: 36,
           child: Image.asset(
@@ -184,20 +167,13 @@ class _HeadBarState extends State<HeadBar> {
                 const Icon(Icons.fastfood, color: NesaColors.terracotta),
           ),
         ),
-
         const Spacer(),
-
-        // Icon Search (bukan field panjang)
         IconButton(
           onPressed: _toggleMobileSearch,
           icon: const Icon(Icons.search, color: Colors.black87),
           tooltip: 'Search',
         ),
-
-        // Cart
         _buildCartButton(),
-
-        // Dropdown Menu (Pengganti tombol Home/Menu/About)
         PopupMenuButton<int>(
           icon: const Icon(Icons.menu_rounded, color: Colors.black87),
           shape: RoundedRectangleBorder(
@@ -205,7 +181,6 @@ class _HeadBarState extends State<HeadBar> {
           ),
           onSelected: (index) {
             if (index == 99) {
-              // Logic jika profile diklik di dalam menu (opsional)
               if (widget.onProfileTap != null) widget.onProfileTap!();
             } else {
               widget.onMenuTap(index);
@@ -216,7 +191,6 @@ class _HeadBarState extends State<HeadBar> {
             _buildPopupMenuItem(1, 'Menu', Icons.restaurant_menu_rounded),
             _buildPopupMenuItem(2, 'About', Icons.info_rounded),
             const PopupMenuDivider(),
-            // Opsi Profil di dalam menu hamburger juga untuk akses cepat
             PopupMenuItem(
               value: 99,
               child: Row(
@@ -240,8 +214,6 @@ class _HeadBarState extends State<HeadBar> {
     );
   }
 
-  // --- WIDGET PENDUKUNG (REUSABLE) ---
-
   Widget _buildSearchField({bool isExpanded = false, bool autoFocus = false}) {
     return TextField(
       controller: _ctrl,
@@ -249,9 +221,6 @@ class _HeadBarState extends State<HeadBar> {
       onChanged: (v) {
         if (widget.onSearch != null) widget.onSearch!(v);
         setState(() {});
-      },
-      onSubmitted: (v) {
-        if (widget.onSearch != null) widget.onSearch!(v);
       },
       style: GoogleFonts.poppins(fontSize: 14),
       decoration: InputDecoration(
@@ -268,7 +237,7 @@ class _HeadBarState extends State<HeadBar> {
           horizontal: 12,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30), // Pill shape
+          borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
         ),
         suffixIcon: _ctrl.text.isNotEmpty
@@ -354,18 +323,15 @@ class _HeadBarState extends State<HeadBar> {
   }
 }
 
-// Widget tombol menu untuk Desktop
 class _MenuButton extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-
   const _MenuButton({
     required this.label,
     required this.selected,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
