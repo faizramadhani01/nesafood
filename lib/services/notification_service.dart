@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:universal_html/html.dart' as html; // Khusus Web
 
 class NotificationService {
+  // Singleton Pattern
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
@@ -10,22 +11,19 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  // --- INISIALISASI ---
   Future<void> init() async {
     if (kIsWeb) {
-      // --- SETUP KHUSUS WEB ---
-      // Minta izin langsung saat init di Web
-      html.Notification.requestPermission().then((permission) {
-        if (permission == 'granted') {
-          print("Izin Notifikasi Web Diberikan");
-        }
-      });
+      // Minta izin langsung di Web
+      html.Notification.requestPermission();
       return;
     }
 
-    // --- SETUP UNTUK HP (ANDROID/IOS APP) ---
+    // Setup Android
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
+    // Setup iOS
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
           requestSoundPermission: true,
@@ -42,41 +40,69 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
+  // --- 1. UNTUK USER: Notifikasi "Pesanan Siap" ---
   Future<void> showOrderReadyNotification(
     String orderId,
     String menuName,
   ) async {
-    final title = 'Pesanan Siap! 🍽️';
-    final body =
-        'Hore! Pesananmu $menuName sudah selesai dimasak. Yuk ambil sekarang!';
+    await _showNotification(
+      id: orderId.hashCode,
+      title: 'Pesanan Siap! 🍽️',
+      body:
+          'Hore! Pesananmu $menuName sudah selesai dimasak. Yuk ambil sekarang!',
+      channelId: 'order_status_channel',
+      channelName: 'Status Pesanan',
+    );
+  }
 
+  // --- 2. UNTUK ADMIN: Notifikasi "Pesanan Baru Masuk" ---
+  Future<void> showNewOrderNotification(
+    String orderId,
+    String tableNumber,
+  ) async {
+    await _showNotification(
+      id: orderId.hashCode,
+      title: 'Pesanan Baru Masuk! 🔔',
+      body: 'Ada pelanggan baru di Meja $tableNumber. Cek pesanan sekarang!',
+      channelId: 'admin_order_channel',
+      channelName: 'Pesanan Masuk Admin',
+    );
+  }
+
+  // --- HELPER: Logic Tampilan Web vs Native ---
+  Future<void> _showNotification({
+    required int id,
+    required String title,
+    required String body,
+    required String channelId,
+    required String channelName,
+  }) async {
+    // A. JIKA DI WEB
     if (kIsWeb) {
-      // --- TAMPILKAN NOTIFIKASI DI WEB ---
       if (html.Notification.permission == 'granted') {
+        // Tampilkan notifikasi browser standar
         html.Notification(title, body: body, icon: 'icons/Icon-192.png');
       } else {
-        // Coba minta izin lagi jika belum ada
         html.Notification.requestPermission();
       }
       return;
     }
 
-    // --- TAMPILKAN NOTIFIKASI DI HP (ANDROID/IOS APP) ---
-    final BigTextStyleInformation
-    bigTextStyleInformation = BigTextStyleInformation(
-      'Hore! Pesananmu <b>$menuName</b> sudah selesai dimasak dan siap diambil. Yuk segera ke kantin dan tunjukkan pesananmu sebelum dingin! 🍜',
-      htmlFormatBigText: true,
-      contentTitle: title,
-      htmlFormatContentTitle: true,
-      summaryText: 'Status Update',
-      htmlFormatSummaryText: true,
-    );
+    // B. JIKA DI HP (ANDROID/IOS)
+    final BigTextStyleInformation bigTextStyleInformation =
+        BigTextStyleInformation(
+          body,
+          htmlFormatBigText: false,
+          contentTitle: title,
+          htmlFormatContentTitle: false,
+          summaryText: 'Nesafood Update',
+          htmlFormatSummaryText: false,
+        );
 
-    final AndroidNotificationDetails androidPlatformChannelSpecifics =
+    final AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-          'order_status_channel_id',
-          'Status Pesanan',
-          channelDescription: 'Notifikasi update status pesanan makanan',
+          channelId,
+          channelName,
           importance: Importance.max,
           priority: Priority.high,
           playSound: true,
@@ -84,15 +110,15 @@ class NotificationService {
           styleInformation: bigTextStyleInformation,
         );
 
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
+    final NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
     );
 
     await flutterLocalNotificationsPlugin.show(
-      orderId.hashCode,
+      id,
       title,
       body,
-      platformChannelSpecifics,
+      platformDetails,
     );
   }
 }

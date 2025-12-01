@@ -1,19 +1,91 @@
+import 'dart:async'; // WAJIB: Untuk StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart'; // WAJIB
+
 import '../../services/firestore_service.dart';
 import '../../theme.dart';
-import 'service/admin_auth_service.dart'; // Pastikan import ini benar
+import 'service/admin_auth_service.dart';
+import '../../services/notification_service.dart'; // Import Service Notifikasi
 
-class DashboardAdminScreen extends StatelessWidget {
+class DashboardAdminScreen extends StatefulWidget {
   final String kantinId;
-  final FirestoreService _fs = FirestoreService();
-  final AdminAuthService _authService =
-      AdminAuthService(); // Service Auth Admin
+  const DashboardAdminScreen({super.key, required this.kantinId});
 
-  DashboardAdminScreen({super.key, required this.kantinId});
+  @override
+  State<DashboardAdminScreen> createState() => _DashboardAdminScreenState();
+}
+
+class _DashboardAdminScreenState extends State<DashboardAdminScreen> {
+  final FirestoreService _fs = FirestoreService();
+  final AdminAuthService _authService = AdminAuthService();
+
+  // Variabel untuk Notifikasi
+  StreamSubscription? _adminOrderSubscription;
+  late DateTime _dashboardOpenTime;
+
+  @override
+  void initState() {
+    super.initState();
+    // 1. Catat waktu saat Dashboard dibuka
+    // (Agar pesanan kemarin/tadi pagi tidak membunyikan notif lagi saat login)
+    _dashboardOpenTime = DateTime.now();
+
+    // 2. Aktifkan Listener Notifikasi
+    _setupAdminNotifications();
+  }
+
+  @override
+  void dispose() {
+    // 3. Matikan listener saat keluar halaman (PENTING agar tidak memory leak)
+    _adminOrderSubscription?.cancel();
+    super.dispose();
+  }
+
+  // --- LOGIKA NOTIFIKASI ADMIN ---
+  Future<void> _setupAdminNotifications() async {
+    // Init service & Minta Izin
+    await NotificationService().init();
+    await Permission.notification.request();
+
+    // Mulai dengarkan stream pesanan kantin ini
+    _adminOrderSubscription = _fs.getOrdersByKantin(widget.kantinId).listen((
+      snapshot,
+    ) {
+      for (var change in snapshot.docChanges) {
+        // Cek jika ada dokumen yang DITAMBAHKAN (Added)
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+
+          final status = data['status'] ?? 'pending';
+          final orderDateStr = data['orderDate'] as String?;
+          final tableNumber = data['tableNumber'] ?? '-';
+
+          // Filter: Hanya notifikasi jika pesanan BARU & Status Masih Pending
+          if (status == 'pending' && orderDateStr != null) {
+            try {
+              final orderDate = DateTime.parse(orderDateStr);
+
+              // LOGIKA UTAMA:
+              // Hanya bunyikan notifikasi jika tanggal pesanan > waktu buka dashboard
+              if (orderDate.isAfter(_dashboardOpenTime)) {
+                // TING! Bunyikan Notifikasi
+                NotificationService().showNewOrderNotification(
+                  change.doc.id,
+                  tableNumber.toString(),
+                );
+              }
+            } catch (e) {
+              // Ignore date parsing error
+            }
+          }
+        }
+      }
+    });
+  }
 
   // --- LOGIKA LOGOUT ---
   Future<void> _handleLogout(BuildContext context) async {
@@ -84,7 +156,8 @@ class DashboardAdminScreen extends StatelessWidget {
       ),
       backgroundColor: NesaColors.background,
       body: StreamBuilder<QuerySnapshot>(
-        stream: _fs.getOrdersByKantin(kantinId),
+        // Gunakan widget.kantinId karena sekarang di dalam State
+        stream: _fs.getOrdersByKantin(widget.kantinId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
