@@ -10,7 +10,7 @@ import 'splash_screen.dart';
 import 'login_screen.dart';
 import 'signin_screen.dart'; // Register Manual
 import 'pages/complete_profile_screen.dart'; // Register Google (Lengkapi Data)
-import 'pages/home_screen.dart'; // Shell Utama
+import 'pages/home_screen.dart';
 import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
 import 'pages/settings_screen.dart';
@@ -28,7 +28,6 @@ void main() async {
 
   // Inisialisasi Firebase
   if (kIsWeb) {
-    // Konfigurasi untuk Web (Ganti dengan config terbaru jika ada perubahan)
     await Firebase.initializeApp(
       options: const FirebaseOptions(
         apiKey: "AIzaSyCSXSyY0XjTRzGjuEhFsrbWaVdx6hCjQpA",
@@ -41,7 +40,6 @@ void main() async {
       ),
     );
   } else {
-    // Untuk Android/iOS (Otomatis baca google-services.json)
     await Firebase.initializeApp();
   }
 
@@ -80,7 +78,7 @@ final GoRouter _router = GoRouter(
       },
     ),
 
-    // 5. Home Screen (Shell Utama)
+    // 5. Home Screen
     GoRoute(
       path: '/home',
       builder: (context, state) {
@@ -98,29 +96,35 @@ final GoRouter _router = GoRouter(
       },
     ),
 
-    // 7. Cart
+    // 7. Cart (Keranjang) - PERBAIKAN DI SINI
     GoRoute(
       path: '/cart',
-      builder: (context, state) => const CartScreen(counts: {}, menuMap: {}),
+      builder: (context, state) {
+        // Default kosong jika diakses langsung
+        return const CartScreen(
+          counts: {},
+          menuMap: {},
+          kantinId: '', // Tambahkan parameter wajib ini (kosong default)
+        );
+      },
     ),
 
-    // 8. Profile Panel (Overlay)
+    // 8. Profile Panel
     GoRoute(
       path: '/profile',
       builder: (context, state) =>
           ProfilePanel(username: 'User', onClose: () {}),
     ),
 
-    // 9. Profil Saya (Edit Data)
+    // 9. My Profile
     GoRoute(
       path: '/my-profile',
       builder: (context, state) {
-        // FIX: Tidak butuh parameter username lagi
         return const MyProfileScreen();
       },
     ),
 
-    // 10. Pengaturan Akun
+    // 10. Settings
     GoRoute(
       path: '/settings',
       builder: (context, state) {
@@ -134,7 +138,6 @@ final GoRouter _router = GoRouter(
       path: '/order-history',
       builder: (context, state) {
         final extra = state.extra;
-        // Cek apakah parameter yang dikirim List Order (dari checkout) atau UID (dari menu)
         if (extra is List<Order>) {
           return OrderHistoryScreen(username: 'Guest', initialOrders: extra);
         }

@@ -9,7 +9,7 @@ import 'cart_screen.dart';
 import '../theme.dart';
 import '../services/auth_service.dart';
 
-// Import Halaman Baru (Modular Pages)
+// Import Halaman Baru
 import 'home/landing_page.dart';
 import 'home/canteen_list_page.dart';
 import 'home/canteen_menu_page.dart';
@@ -24,29 +24,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Navigation State
   int selectedIndex = 0;
-  Kantin? activeKantin; // Jika null = Landing/List, Jika isi = Menu Page
+  Kantin? activeKantin;
   bool showProfilePanel = false;
-
-  // Data User
   late String displayUsername;
   final AuthService _authService = AuthService();
 
-  // Data Cart (Lokal State untuk interaksi real-time di UI)
+  // Data Cart
   final Map<String, int> itemCounts = {};
   final Map<String, Menu> cartItems = {};
 
-  // Search
+  // --- VARIABEL PENTING: ID Kantin Pemilik Keranjang ---
+  String? currentCartKantinId;
+
   String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    // Set nama awal (bisa dari parameter atau Guest)
     displayUsername = widget.username ?? 'Guest';
-
-    // Ambil nama asli dari Firestore
     _fetchRealUserName();
   }
 
@@ -62,16 +58,35 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       } catch (e) {
-        // Ignore error, pakai nama default
+        // Ignore error
       }
     }
   }
 
-  // --- LOGIKA CART (Add/Remove) ---
+  // --- LOGIKA KERANJANG (DENGAN PENGECEKAN KANTIN) ---
   int get cartTotalCount => itemCounts.values.fold(0, (a, b) => a + b);
 
-  void _addMenuToCart(Menu m) {
+  // Fungsi Add Menu yang Cerdas: Menerima ID Kantin
+  void _addMenuToCart(Menu m, String originKantinId) {
     setState(() {
+      // 1. Jika keranjang masih kosong, tetapkan kantin ini sebagai pemilik
+      if (itemCounts.isEmpty) {
+        currentCartKantinId = originKantinId;
+      }
+
+      // 2. Cek Konflik: Apakah user belanja di kantin yang berbeda?
+      if (currentCartKantinId != null &&
+          currentCartKantinId != originKantinId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Selesaikan pesanan di kantin sebelumnya dulu!"),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return; // Batalkan, jangan dimasukkan ke cart
+      }
+
       itemCounts[m.name] = (itemCounts[m.name] ?? 0) + 1;
       cartItems[m.name] = m;
     });
@@ -83,22 +98,28 @@ class _HomeScreenState extends State<HomeScreen> {
       if (v <= 0) {
         itemCounts.remove(m.name);
         cartItems.remove(m.name);
+
+        // Jika keranjang jadi kosong, reset ID agar bisa belanja di kantin lain
+        if (itemCounts.isEmpty) {
+          currentCartKantinId = null;
+        }
       } else {
         itemCounts[m.name] = v;
       }
     });
   }
 
-  // --- BUKA HALAMAN KERANJANG ---
+  // Buka Cart dengan membawa ID Kantin
   void _openCart() {
-    // Navigasi ke Cart Screen dan tunggu hasil kembalian (sync jumlah item)
     Navigator.push<Map<String, int>>(
       context,
       MaterialPageRoute(
         builder: (_) => CartScreen(
           counts: itemCounts,
           menuMap: cartItems,
-          username: displayUsername, // Kirim nama user untuk data order
+          username: displayUsername,
+          // PENTING: Kirim ID Kantin ke CartScreen
+          kantinId: currentCartKantinId ?? '1',
         ),
       ),
     ).then((result) {
@@ -107,21 +128,24 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCounts
             ..clear()
             ..addAll(result);
-          // Bersihkan item yang jumlahnya 0
           cartItems.removeWhere(
             (name, _) =>
                 !(itemCounts.containsKey(name) && itemCounts[name]! > 0),
           );
+
+          // Jika user mengosongkan cart di halaman cart
+          if (itemCounts.isEmpty) {
+            currentCartKantinId = null;
+          }
         });
       }
     });
   }
 
-  // --- LOGIKA NAVIGASI HEADBAR ---
   void handleMenuTap(int index) {
     setState(() {
       selectedIndex = index;
-      activeKantin = null; // Reset kantin saat pindah tab utama
+      activeKantin = null;
       showProfilePanel = false;
       searchQuery = '';
     });
@@ -144,15 +168,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Stack(
         children: [
-          // Content Utama (Tengah)
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1250),
               child: _buildMainContent(),
             ),
           ),
-
-          // Profile Overlay (Muncul di atas konten)
           if (showProfilePanel)
             Positioned(
               top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
@@ -167,73 +188,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- SWITCHER HALAMAN (INTI MODULAR) ---
   Widget _buildMainContent() {
-    // 1. Jika sedang mencari
     if (searchQuery.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              "Hasil pencarian: $searchQuery",
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const Text(
-              "(Fitur Search belum dipisah ke modul tersendiri)",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
-        ),
-      );
+      return Center(child: Text("Hasil pencarian: $searchQuery"));
     }
 
     switch (selectedIndex) {
-      case 0: // TAB HOME
-        // A. Jika user sedang lihat detail menu kantin (dari klik Hero Banner)
+      case 0: // HOME
         if (activeKantin != null) {
           return CanteenMenuPage(
             kantin: activeKantin!,
-            onBack: () =>
-                setState(() => activeKantin = null), // Back ke Landing
-            onAddCart: _addMenuToCart,
+            onBack: () => setState(() => activeKantin = null),
+            // Kirim ID Kantin Aktif ('1', '2', dll) ke fungsi add cart
+            onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
             onRemoveCart: _removeOneFromCart,
             itemCounts: itemCounts,
           );
         }
-        // B. Default: Landing Page (Dashboard)
         return LandingPage(
           username: displayUsername,
-          onSeeAllKantin: () =>
-              setState(() => selectedIndex = 1), // Pindah ke Tab Menu
-          onAddCart: _addMenuToCart,
+          onSeeAllKantin: () => setState(() => selectedIndex = 1),
+          // Menu di Landing Page kita anggap masuk Kantin 1 (Default)
+          onAddCart: (m) => _addMenuToCart(m, '1'),
           onRemoveCart: _removeOneFromCart,
           itemCounts: itemCounts,
-          onSelectKantin: (k) =>
-              setState(() => activeKantin = k), // Masuk detail kantin
+          onSelectKantin: (k) => setState(() => activeKantin = k),
         );
 
-      case 1: // TAB MENU (DAFTAR KANTIN)
-        // A. Jika sedang lihat detail kantin
+      case 1: // MENU LIST
         if (activeKantin != null) {
           return CanteenMenuPage(
             kantin: activeKantin!,
-            onBack: () =>
-                setState(() => activeKantin = null), // Back ke List Kantin
-            onAddCart: _addMenuToCart,
+            onBack: () => setState(() => activeKantin = null),
+            onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
             onRemoveCart: _removeOneFromCart,
             itemCounts: itemCounts,
           );
         }
-        // B. Default: List Semua Kantin
         return CanteenListPage(
           onKantinTap: (k) => setState(() => activeKantin = k),
-          onBack: () => setState(() => selectedIndex = 0), // Back ke Home
+          onBack: () => setState(() => selectedIndex = 0),
         );
 
-      case 2: // TAB ABOUT
+      case 2: // ABOUT
         return const AboutPage();
 
       default:

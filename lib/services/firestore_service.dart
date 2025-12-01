@@ -16,9 +16,7 @@ class FirestoreService {
   // Status: pending -> cooking -> ready -> completed
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
-      await _db.collection('orders').doc(orderId).update({
-        'status': newStatus,
-      });
+      await _db.collection('orders').doc(orderId).update({'status': newStatus});
     } catch (e) {
       throw Exception('Gagal update status: $e');
     }
@@ -29,7 +27,7 @@ class FirestoreService {
   Stream<QuerySnapshot> getOrdersByKantin(String kantinId) {
     return _db
         .collection('orders')
-        // .where('kantinId', isEqualTo: kantinId) // Aktifkan jika sudah pakai ID Kantin
+        .where('kantinId', isEqualTo: kantinId)
         .orderBy('orderDate', descending: true)
         .snapshots();
   }
@@ -46,7 +44,10 @@ class FirestoreService {
   // --- USER/ADMIN: Hapus Data (Opsional) ---
   Future<void> deleteOrdersForUser(String userId) async {
     try {
-      final snapshot = await _db.collection('orders').where('userId', isEqualTo: userId).get();
+      final snapshot = await _db
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .get();
       final batch = _db.batch();
       for (final doc in snapshot.docs) {
         batch.delete(doc.reference);
