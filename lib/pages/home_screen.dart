@@ -1,15 +1,23 @@
+import 'dart:async'; // Tambahkan ini untuk StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:permission_handler/permission_handler.dart'; // Tambahkan ini
+
+// Import Model & Service
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart'; // Pastikan import ini ada
+import '../services/notification_service.dart'; // Import service notifikasi baru
+import '../theme.dart';
+
+// Import UI Components
 import 'headbar_screen.dart';
 import '../profile_panel_screen.dart';
 import 'cart_screen.dart';
-import '../theme.dart';
-import '../services/auth_service.dart';
 
-// Import Halaman Baru
+// Import Halaman Tab
 import 'home/landing_page.dart';
 import 'home/canteen_list_page.dart';
 import 'home/canteen_menu_page.dart';
@@ -28,7 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Kantin? activeKantin;
   bool showProfilePanel = false;
   late String displayUsername;
+
   final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   // Data Cart
   final Map<String, int> itemCounts = {};
@@ -39,13 +49,78 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String searchQuery = '';
 
+  // --- VARIABEL NOTIFIKASI ---
+  StreamSubscription? _orderSubscription;
+
   @override
   void initState() {
     super.initState();
     displayUsername = widget.username ?? 'Guest';
     _fetchRealUserName();
+
+    // 1. Inisialisasi Service Notifikasi
+    _setupNotifications();
+
+    // 2. Jalankan Listener Firestore untuk Notifikasi
+    _listenToOrderUpdates();
   }
 
+  @override
+  void dispose() {
+    // PENTING: Matikan listener saat halaman ditutup agar tidak memory leak
+    _orderSubscription?.cancel();
+    super.dispose();
+  }
+
+  // --- LOGIKA NOTIFIKASI ---
+  Future<void> _setupNotifications() async {
+    // Inisialisasi plugin notifikasi
+    await NotificationService().init();
+
+    // Minta izin notifikasi (Wajib untuk Android 13+)
+    await Permission.notification.request();
+  }
+
+  void _listenToOrderUpdates() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Stream pesanan khusus user ini
+    _orderSubscription = _firestoreService.getOrders(user.uid).listen((
+      snapshot,
+    ) {
+      for (var change in snapshot.docChanges) {
+        // Kita hanya bereaksi jika data di-UPDATE (Modified)
+        // Kita abaikan 'added' agar tidak notifikasi spam saat baru buka aplikasi
+        if (change.type == DocumentChangeType.modified) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          final status = data['status'];
+
+          // JIKA STATUS BERUBAH JADI 'READY'
+          if (status == 'ready') {
+            // Ambil nama menu untuk pesan notifikasi
+            String menuName = 'Makanan kamu';
+            final items = (data['items'] as List<dynamic>?) ?? [];
+
+            if (items.isNotEmpty) {
+              menuName = items[0]['menu_name'];
+              if (items.length > 1) {
+                menuName += " & ${items.length - 1} lainnya";
+              }
+            }
+
+            // Panggil fungsi notifikasi suara & popup
+            NotificationService().showOrderReadyNotification(
+              change.doc.id,
+              menuName,
+            );
+          }
+        }
+      }
+    });
+  }
+
+  // --- LOGIKA USERNAME ---
   Future<void> _fetchRealUserName() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -63,10 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // --- LOGIKA KERANJANG (DENGAN PENGECEKAN KANTIN) ---
+  // --- LOGIKA KERANJANG ---
   int get cartTotalCount => itemCounts.values.fold(0, (a, b) => a + b);
 
-  // Fungsi Add Menu yang Cerdas: Menerima ID Kantin
   void _addMenuToCart(Menu m, String originKantinId) {
     setState(() {
       // 1. Jika keranjang masih kosong, tetapkan kantin ini sebagai pemilik
@@ -84,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-        return; // Batalkan, jangan dimasukkan ke cart
+        return;
       }
 
       itemCounts[m.name] = (itemCounts[m.name] ?? 0) + 1;
@@ -109,7 +183,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Buka Cart dengan membawa ID Kantin
   void _openCart() {
     Navigator.push<Map<String, int>>(
       context,
@@ -118,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> {
           counts: itemCounts,
           menuMap: cartItems,
           username: displayUsername,
-          // PENTING: Kirim ID Kantin ke CartScreen
           kantinId: currentCartKantinId ?? '1',
         ),
       ),
@@ -133,7 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 !(itemCounts.containsKey(name) && itemCounts[name]! > 0),
           );
 
-          // Jika user mengosongkan cart di halaman cart
           if (itemCounts.isEmpty) {
             currentCartKantinId = null;
           }
@@ -199,7 +270,6 @@ class _HomeScreenState extends State<HomeScreen> {
           return CanteenMenuPage(
             kantin: activeKantin!,
             onBack: () => setState(() => activeKantin = null),
-            // Kirim ID Kantin Aktif ('1', '2', dll) ke fungsi add cart
             onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
             onRemoveCart: _removeOneFromCart,
             itemCounts: itemCounts,
@@ -208,8 +278,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return LandingPage(
           username: displayUsername,
           onSeeAllKantin: () => setState(() => selectedIndex = 1),
-          // Menu di Landing Page kita anggap masuk Kantin 1 (Default)
-          onAddCart: (m) => _addMenuToCart(m, '1'),
+          onAddCart: (m) =>
+              _addMenuToCart(m, '1'), // Default kantin 1 untuk landing
           onRemoveCart: _removeOneFromCart,
           itemCounts: itemCounts,
           onSelectKantin: (k) => setState(() => activeKantin = k),
