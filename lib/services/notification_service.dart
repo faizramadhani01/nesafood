@@ -1,26 +1,31 @@
+import 'package:flutter/foundation.dart'; // Untuk kIsWeb
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:universal_html/html.dart' as html; // Khusus Web
 
 class NotificationService {
-  // Singleton pattern agar service ini bisa dipanggil dari mana saja dengan satu instance
   static final NotificationService _instance = NotificationService._internal();
-
-  factory NotificationService() {
-    return _instance;
-  }
-
+  factory NotificationService() => _instance;
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // --- 1. Inisialisasi Service ---
   Future<void> init() async {
-    // Pengaturan untuk Android
-    // Pastikan icon 'ic_launcher' ada di folder android/app/src/main/res/mipmap-*/
+    if (kIsWeb) {
+      // --- SETUP KHUSUS WEB ---
+      // Minta izin langsung saat init di Web
+      html.Notification.requestPermission().then((permission) {
+        if (permission == 'granted') {
+          print("Izin Notifikasi Web Diberikan");
+        }
+      });
+      return;
+    }
+
+    // --- SETUP UNTUK HP (ANDROID/IOS APP) ---
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Pengaturan untuk iOS (Meminta izin dasar)
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
           requestSoundPermission: true,
@@ -34,66 +39,60 @@ class NotificationService {
           iOS: initializationSettingsDarwin,
         );
 
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Logika jika notifikasi diklik (opsional, bisa diarahkan ke halaman history)
-        print("Notifikasi diklik: ${response.payload}");
-      },
-    );
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  // --- 2. Tampilkan Notifikasi "Pesanan Siap" ---
   Future<void> showOrderReadyNotification(
     String orderId,
     String menuName,
   ) async {
-    // Gaya Teks Panjang (BigTextStyle) agar pesan tidak terpotong
+    final title = 'Pesanan Siap! 🍽️';
+    final body =
+        'Hore! Pesananmu $menuName sudah selesai dimasak. Yuk ambil sekarang!';
+
+    if (kIsWeb) {
+      // --- TAMPILKAN NOTIFIKASI DI WEB ---
+      if (html.Notification.permission == 'granted') {
+        html.Notification(title, body: body, icon: 'icons/Icon-192.png');
+      } else {
+        // Coba minta izin lagi jika belum ada
+        html.Notification.requestPermission();
+      }
+      return;
+    }
+
+    // --- TAMPILKAN NOTIFIKASI DI HP (ANDROID/IOS APP) ---
     final BigTextStyleInformation
     bigTextStyleInformation = BigTextStyleInformation(
       'Hore! Pesananmu <b>$menuName</b> sudah selesai dimasak dan siap diambil. Yuk segera ke kantin dan tunjukkan pesananmu sebelum dingin! 🍜',
       htmlFormatBigText: true,
-      contentTitle: 'Pesanan Siap Diambil! 🍽️',
+      contentTitle: title,
       htmlFormatContentTitle: true,
       summaryText: 'Status Update',
       htmlFormatSummaryText: true,
     );
 
-    // Detail Spesifik Android
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-          'order_status_channel_id', // ID Channel (harus unik)
-          'Status Pesanan', // Nama Channel yang muncul di pengaturan HP
+          'order_status_channel_id',
+          'Status Pesanan',
           channelDescription: 'Notifikasi update status pesanan makanan',
-          importance: Importance.max, // MAX agar muncul pop-up (heads-up)
-          priority: Priority.high, // HIGH agar bunyi dan getar
+          importance: Importance.max,
+          priority: Priority.high,
           playSound: true,
           enableVibration: true,
-          styleInformation:
-              bigTextStyleInformation, // Terapkan gaya teks panjang
-        );
-
-    // Detail Spesifik iOS
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
+          styleInformation: bigTextStyleInformation,
         );
 
     final NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
     );
 
-    // Tampilkan Notifikasi
-    // Gunakan hashCode dari orderId sebagai ID notifikasi agar setiap pesanan punya notif sendiri
     await flutterLocalNotificationsPlugin.show(
       orderId.hashCode,
-      'Pesanan Siap!', // Judul default (akan tertimpa oleh contentTitle di atas untuk Android)
-      'Pesanan $menuName sudah siap diambil.', // Body default
+      title,
+      body,
       platformChannelSpecifics,
-      payload: orderId, // Data tambahan jika notif diklik
     );
   }
 }
