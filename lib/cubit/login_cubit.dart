@@ -36,7 +36,7 @@ class LoginCubit extends Cubit<LoginState> {
     emit(LoginState(isLoading: true));
     try {
       final user = await _authService.signInWithGoogle();
-      
+
       if (user != null) {
         final isRegistered = await _authService.isUserRegistered(user.uid);
 
@@ -49,11 +49,16 @@ class LoginCubit extends Cubit<LoginState> {
         emit(LoginState(isLoading: false));
       }
     } catch (e) {
-      emit(LoginState(error: "Gagal Login Google: ${e.toString()}"));
+      emit(
+        LoginState(
+          error:
+              "Hmm, ada kendala saat login dengan Google. Silakan coba lagi nanti.",
+        ),
+      );
     }
   }
 
-  // --- LOGIN MANUAL (DENGAN CEK ERROR VERIFIKASI) ---
+  // --- LOGIN MANUAL ---
   Future<void> login(String email, String password) async {
     emit(LoginState(isLoading: true));
     try {
@@ -61,21 +66,37 @@ class LoginCubit extends Cubit<LoginState> {
       if (user != null) {
         emit(LoginState(isSuccess: true, userId: user.uid));
       } else {
-        emit(LoginState(error: "Login gagal."));
+        emit(
+          LoginState(
+            error: "Login gagal. Pastikan data yang kamu masukkan sudah benar.",
+          ),
+        );
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        emit(LoginState(error: "Email atau password salah"));
-      } 
-      // Tangkap error verifikasi
-      else if (e.code == 'email-not-verified') {
-        emit(LoginState(error: e.message));
-      } 
-      else {
-        emit(LoginState(error: "Error Auth: ${e.message}"));
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        emit(
+          LoginState(
+            error: "Ups! Email atau password kamu salah. Yuk, coba dicek lagi.",
+          ),
+        );
+      } else if (e.code == 'email-not-verified') {
+        emit(
+          LoginState(
+            error:
+                "Email kamu belum diverifikasi. Jangan lupa cek inbox atau folder spam.",
+          ),
+        );
+      } else {
+        emit(
+          LoginState(
+            error: "Waduh, ada masalah teknis. Pesan error: ${e.message}",
+          ),
+        );
       }
     } catch (e) {
-      emit(LoginState(error: "Error: ${e.toString()}"));
+      emit(LoginState(error: "Sepertinya ada kendala. Coba lagi nanti, oke?"));
     }
   }
 
@@ -89,13 +110,28 @@ class LoginCubit extends Cubit<LoginState> {
         final data = doc.data() as Map<String, dynamic>?;
 
         if (data != null && data['role'] == 'admin') {
-          emit(LoginState(isAdminSuccess: true, userId: user.uid, kantinId: data['kantinId']));
+          emit(
+            LoginState(
+              isAdminSuccess: true,
+              userId: user.uid,
+              kantinId: data['kantinId'],
+            ),
+          );
         } else {
-          emit(LoginState(error: "Akun ini bukan admin."));
+          emit(
+            LoginState(
+              error:
+                  "Akun ini bukan admin. Pastikan kamu login dengan akun admin.",
+            ),
+          );
         }
       }
     } catch (e) {
-      emit(LoginState(error: "Gagal Login Admin: ${e.toString()}"));
+      emit(
+        LoginState(
+          error: "Hmm, ada kendala saat login admin. Silakan coba lagi nanti.",
+        ),
+      );
     }
   }
 }

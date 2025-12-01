@@ -1,40 +1,45 @@
 import 'menu.dart';
 
 class Kantin {
-  final String id; // <--- WAJIB: ID Unik untuk membedakan kantin
+  final String id;
   final String name;
   final String image;
   double rating;
   final List<Menu> menus;
   final String categoryApi; 
+  final String qrisUrl; // <--- Field Baru untuk QRIS
 
   Kantin({
-    required this.id, // Wajib diisi
+    required this.id,
     required this.name,
     required this.image,
     required this.rating,
     required this.menus,
-    required this.categoryApi, 
+    required this.categoryApi,
+    required this.qrisUrl, // Wajib
   });
 }
 
-// DATA KANTIN (Pastikan ID ini sama dengan 'kantinId' di akun Admin Firebase Anda)
+// DATA KANTIN
 List<Kantin> kantinList = [
   Kantin(
-    id: '1', // KANTIN 1
+    id: '1',
     name: 'Kantin 1 (Spesialis Ayam)',
     image: 'https://www.themealdb.com/images/category/Chicken.png',
     rating: 4.5,
     menus: [], 
     categoryApi: 'Chicken',
+    // API QR Server untuk generate QR Code otomatis
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%201',
   ),
   Kantin(
-    id: '2', // KANTIN 2
+    id: '2',
     name: 'Kantin 2 (Seafood Segar)',
     image: 'https://www.themealdb.com/images/category/Seafood.png',
     rating: 4.8,
     menus: [],
     categoryApi: 'Seafood',
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%202',
   ),
   Kantin(
     id: '3',
@@ -43,6 +48,7 @@ List<Kantin> kantinList = [
     rating: 4.3,
     menus: [],
     categoryApi: 'Pasta', 
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%203',
   ),
   Kantin(
     id: '4',
@@ -51,6 +57,7 @@ List<Kantin> kantinList = [
     rating: 4.6,
     menus: [],
     categoryApi: 'Breakfast', 
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%204',
   ),
   Kantin(
     id: '5',
@@ -59,6 +66,7 @@ List<Kantin> kantinList = [
     rating: 4.7,
     menus: [],
     categoryApi: 'Dessert', 
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%205',
   ),
   Kantin(
     id: '6',
@@ -67,6 +75,7 @@ List<Kantin> kantinList = [
     rating: 4.4,
     menus: [],
     categoryApi: 'Vegetarian', 
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%206',
   ),
    Kantin(
     id: '7',
@@ -75,5 +84,6 @@ List<Kantin> kantinList = [
     rating: 4.9,
     menus: [],
     categoryApi: 'Beef', 
+    qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%207',
   ),
 ];
