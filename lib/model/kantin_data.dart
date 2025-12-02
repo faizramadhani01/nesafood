@@ -20,13 +20,13 @@ class Kantin {
   });
 }
 
-// DATA KANTIN YANG BARU (Link Gambar Sudah Diganti)
+// DATA KANTIN (UPDATE: GAMBAR SUASANA TOKO/WARUNG REAL)
 List<Kantin> kantinList = [
   Kantin(
     id: '1',
     name: 'Kantin 1 (Spesialis Ayam)',
-    // GANTI LINK INI (Ini server yang sama dengan Kantin 2, pasti jalan)
-    image: 'https://www.themealdb.com/images/category/Chicken.png', 
+    // Warung Makan Lesehan / Tenda
+    image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&q=80', 
     rating: 4.5,
     menus: [],
     categoryApi: 'Chicken',
@@ -35,7 +35,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '2',
     name: 'Kantin 2 (Seafood Segar)',
-    image: 'https://www.themealdb.com/images/category/Seafood.png',
+    // UPDATE: Gambar Pasar Ikan / Kedai Seafood
+    image: 'assets/kantin2.jpg',
     rating: 4.8,
     menus: [],
     categoryApi: 'Seafood',
@@ -44,7 +45,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '3',
     name: 'Kantin 3 (Western Food)',
-    image: 'https://www.themealdb.com/images/category/Pasta.png',
+    // Cafe Modern
+    image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=600&q=80',
     rating: 4.3,
     menus: [],
     categoryApi: 'Pasta',
@@ -53,7 +55,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '4',
     name: 'Kantin 4 (Aneka Sarapan)',
-    image: 'https://www.themealdb.com/images/category/Breakfast.png',
+    // Coffee Shop / Bakery Pagi
+    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80',
     rating: 4.6,
     menus: [],
     categoryApi: 'Breakfast',
@@ -62,7 +65,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '5',
     name: 'Kantin 5 (Dessert)',
-    image: 'https://www.themealdb.com/images/category/Dessert.png',
+    // UPDATE: Gambar Toko Kue / Etalase Bakery
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
     rating: 4.7,
     menus: [],
     categoryApi: 'Dessert',
@@ -71,7 +75,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '6',
     name: 'Kantin 6 (Vegetarian)',
-    image: 'https://www.themealdb.com/images/category/Vegetarian.png',
+    // UPDATE: Gambar Rak Sayur / Pasar Buah
+    image: 'assets/kantin6.jpg',
     rating: 4.4,
     menus: [],
     categoryApi: 'Vegetarian',
@@ -80,7 +85,8 @@ List<Kantin> kantinList = [
   Kantin(
     id: '7',
     name: 'Kantin 7 (Daging Sapi)',
-    image: 'https://www.themealdb.com/images/category/Beef.png',
+    // Steak House
+    image: 'assets/kantin7.jpg',
     rating: 4.9,
     menus: [],
     categoryApi: 'Beef',

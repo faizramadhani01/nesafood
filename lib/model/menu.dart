@@ -3,21 +3,25 @@ class Menu {
   String _image;
   double _price;
   String _description;
+  double _rating;
 
   Menu({
     required String name,
     required String image,
     required double price,
     required String description,
-  })  : _name = name,
-        _image = image,
-        _price = price,
-        _description = description;
+    double rating = 0,
+  }) : _name = name,
+       _image = image,
+       _price = price,
+       _description = description,
+       _rating = rating;
 
   String get name => _name;
   String get image => _image;
   String get description => _description;
-  
+  double get rating => _rating;
+
   double get price => _price;
 
   set price(double value) {
@@ -31,16 +35,19 @@ class Menu {
   set name(String value) => _name = value;
   set image(String value) => _image = value;
   set description(String value) => _description = value;
+  set rating(double value) => _rating = value;
 
   String getCategory() => 'Menu';
 
   factory Menu.placeholder() => Menu(
-        name: 'Unknown',
-        image: 'assets/placeholder.png',
-        price: 0.0,
-        description: '',
-      );
+    name: 'Unknown',
+    image: 'assets/placeholder.png',
+    price: 0.0,
+    description: '',
+    rating: 0,
+  );
 }
+
 class Makanan extends Menu {
   Makanan({
     required super.name,
