@@ -21,6 +21,7 @@ import 'pages/order_history_screen.dart';
 import 'profile_panel_screen.dart';
 import 'pages/my_profile_screen.dart';
 import 'admin/dashboard_admin_screen.dart';
+import 'pages/privacy_policy_screen.dart';
 
 // Models
 import 'model/menu.dart';
@@ -136,6 +137,9 @@ final GoRouter _router = GoRouter(
         return DashboardAdminScreen(kantinId: kantinId);
       },
     ),
-    
+    GoRoute(
+      path: '/privacy-policy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
   ],
 );

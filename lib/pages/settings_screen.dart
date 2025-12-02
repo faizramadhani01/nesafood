@@ -58,7 +58,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icons.privacy_tip_outlined,
             'Kebijakan Privasi',
             '',
-            () {},
+            () {
+              // Navigasi ke halaman Kebijakan Privasi
+              context.push('/privacy-policy');
+            },
           ),
           _buildActionTile(Icons.help_outline, 'Bantuan & Support', '', () {}),
 
@@ -164,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontWeight: FontWeight.w500,
           color: Colors.black87,
         ),
+      ),
     ),
-  ),
   );
 }
