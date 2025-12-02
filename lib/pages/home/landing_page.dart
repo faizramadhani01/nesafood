@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
+import 'package:flutter_rating_stars/flutter_rating_stars.dart'; // PAKAI LIBRARY KAMU
+
 import '../../model/menu.dart';
 import '../../model/kantin_data.dart';
 import '../../theme.dart';
 import '../../services/meal_service.dart';
+import '../detail_menu_screen.dart'; 
 
 class LandingPage extends StatefulWidget {
   final String username;
@@ -13,8 +16,6 @@ class LandingPage extends StatefulWidget {
   final Function(Menu) onAddCart;
   final Function(Menu) onRemoveCart;
   final Map<String, int> itemCounts;
-  
-  // Callback wajib agar bisa diklik
   final Function(Kantin) onSelectKantin; 
 
   const LandingPage({
@@ -62,7 +63,6 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final heroItems = kantinList.take(5).toList();
     
-    // Gabung menu API + Lokal untuk pencarian
     final List<Menu> allMenus = [
       ...apiMenus,
       ...kantinList.expand((k) => k.menus),
@@ -81,10 +81,7 @@ class _LandingPageState extends State<LandingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           
-          // --- KONDISI 1: SEDANG MENCARI ---
           if (isSearching) ...[
-            // Tidak ada widget Text judul di sini (BERSIH)
-
             if (displayedMenus.isEmpty)
               Center(
                 child: Padding(
@@ -95,8 +92,6 @@ class _LandingPageState extends State<LandingPage> {
             else
               _buildGridMenu(displayedMenus),
           ] 
-          
-          // --- KONDISI 2: TAMPILAN NORMAL (HOME) ---
           else ...[
             Text(
               'Halo, ${widget.username}!',
@@ -112,7 +107,6 @@ class _LandingPageState extends State<LandingPage> {
             ),
             const SizedBox(height: 24),
 
-            // Hero Carousel (Gambar Kantin)
             SizedBox(
               height: 24.h,
               child: PageView.builder(
@@ -147,7 +141,6 @@ class _LandingPageState extends State<LandingPage> {
               _buildGridMenu(apiMenus),
 
             const SizedBox(height: 60),
-            // Bagian "Rekomendasi Lokal" SUDAH DIHAPUS.
           ],
         ],
       ),
@@ -164,7 +157,7 @@ class _LandingPageState extends State<LandingPage> {
         maxCrossAxisExtent: 280,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.68, 
       ),
       itemBuilder: (context, i) => _menuItemCard(menus[i]),
     );
@@ -173,101 +166,150 @@ class _LandingPageState extends State<LandingPage> {
   Widget _menuItemCard(Menu m) {
     final count = widget.itemCounts[m.name] ?? 0;
     final isNetwork = m.image.startsWith('http');
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: isNetwork
-                        ? Image.network(
-                            m.image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
-                          )
-                        : Image.asset(
-                            m.image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
-                          ),
-                  ),
-                ),
-                if (count > 0)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: CircleAvatar(
-                      radius: 12,
-                      backgroundColor: NesaColors.terracotta,
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ),
-                  ),
-              ],
+    
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailMenuScreen(
+              menu: m, 
+              onAddCart: widget.onAddCart
             ),
           ),
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ).then((updatedMenu) {
+           if (updatedMenu != null) setState(() => m.rating = updatedMenu.rating);
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Stack(
                 children: [
-                  Text(
-                    m.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: isNetwork
+                          ? Image.network(
+                              m.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
+                            )
+                          : Image.asset(
+                              m.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
+                            ),
+                    ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Rp${m.price.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold),
+                  if (count > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: NesaColors.terracotta,
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
                       ),
-                      InkWell(
-                        onTap: () => widget.onAddCart(m),
-                        child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      m.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    
+                    // --- BINTANG + ANGKA ---
+                    Row(
+                      children: [
+                        RatingStars(
+                          value: m.rating,
+                          onValueChanged: (v) {
+                            // setState(() => m.rating = v); // Read-only di sini
+                          },
+                          starBuilder: (index, color) => Icon(Icons.star, color: color, size: 12),
+                          starCount: 5, 
+                          starSize: 12, 
+                          maxValue: 5, 
+                          starSpacing: 1,
+                          maxValueVisibility: false,
+                          valueLabelVisibility: false,
+                          animationDuration: const Duration(milliseconds: 1000),
+                          valueLabelPadding: const EdgeInsets.symmetric(vertical: 1, horizontal: 8),
+                          valueLabelMargin: const EdgeInsets.only(right: 8),
+                          starOffColor: const Color(0xffe7e8ea),
+                          starColor: Colors.amber,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          m.rating.toString(), // Angka Rating (cth: 4.5)
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600]
+                          ),
+                        )
+                      ],
+                    ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Rp${m.price.toStringAsFixed(0)}',
+                          style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold),
+                        ),
+                        InkWell(
+                          onTap: () => widget.onAddCart(m),
+                          child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _heroCard(Kantin k) {
     return InkWell(
-      // INI YANG MEMBUAT GAMBAR BISA DIKLIK:
       onTap: () => widget.onSelectKantin(k), 
-      
       child: Padding(
         padding: const EdgeInsets.only(right: 16),
         child: Container(

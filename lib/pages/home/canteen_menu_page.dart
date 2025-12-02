@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_rating_stars/flutter_rating_stars.dart';
+import 'package:flutter_rating_stars/flutter_rating_stars.dart'; // PAKAI LIBRARY KAMU
+
 import '../../model/kantin_data.dart';
 import '../../model/menu.dart';
 import '../../theme.dart';
@@ -9,7 +10,7 @@ import '../detail_menu_screen.dart';
 
 class CanteenMenuPage extends StatefulWidget {
   final Kantin kantin;
-  final String searchQuery; // <--- 1. TAMBAHKAN INI
+  final String searchQuery;
   final VoidCallback onBack;
   final Function(Menu) onAddCart;
   final Function(Menu) onRemoveCart;
@@ -18,7 +19,7 @@ class CanteenMenuPage extends StatefulWidget {
   const CanteenMenuPage({
     super.key,
     required this.kantin,
-    required this.searchQuery, // <--- 2. WAJIB DIISI
+    required this.searchQuery,
     required this.onBack,
     required this.onAddCart,
     required this.onRemoveCart,
@@ -48,7 +49,6 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
       if (mounted) {
         setState(() {
           _menus = [...apiMenus, ...widget.kantin.menus];
-          // Hapus duplikat (opsional)
           final ids = <String>{};
           _menus.retainWhere((x) => ids.add(x.name));
           _isLoading = false;
@@ -66,10 +66,8 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    // --- 3. LOGIKA FILTER PENCARIAN DI SINI ---
     final bool isSearching = widget.searchQuery.isNotEmpty;
     
-    // Jika sedang mencari, filter _menus. Jika tidak, pakai semua _menus.
     final List<Menu> displayedMenus = isSearching
         ? _menus.where((m) => 
             m.name.toLowerCase().contains(widget.searchQuery.toLowerCase())
@@ -81,7 +79,6 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // HEADER
             Container(
               padding: const EdgeInsets.all(16),
               color: NesaColors.background,
@@ -120,21 +117,18 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
               ),
             ),
             
-            // CONTENT
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: NesaColors.terracotta))
-                  : displayedMenus.isEmpty // Cek hasil filter kosong atau tidak
+                  : displayedMenus.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.search_off, size: 40, color: Colors.grey),
+                              const Icon(Icons.restaurant_menu, size: 40, color: Colors.grey),
                               const SizedBox(height: 8),
                               Text(
-                                isSearching 
-                                  ? "Menu tidak ditemukan" 
-                                  : "Menu belum tersedia",
+                                isSearching ? "Menu tidak ditemukan" : "Menu belum tersedia",
                                 style: GoogleFonts.poppins(color: Colors.grey),
                               ),
                             ],
@@ -149,21 +143,19 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 child: Text(
-                                  isSearching 
-                                    ? 'Hasil Pencarian' 
-                                    : 'Daftar Menu',
+                                  isSearching ? 'Hasil Pencarian' : 'Daftar Menu',
                                   style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
                               ),
                               GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: displayedMenus.length, // Pakai list yang sudah difilter
+                                itemCount: displayedMenus.length,
                                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                                   maxCrossAxisExtent: 250,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
-                                  childAspectRatio: 0.70,
+                                  childAspectRatio: 0.68,
                                 ),
                                 itemBuilder: (context, i) => _menuItemCard(displayedMenus[i]),
                               ),
@@ -180,6 +172,7 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
 
   Widget _menuItemCard(Menu m) {
     final count = widget.itemCounts[m.name] ?? 0;
+    
     return InkWell(
       onTap: () {
         Navigator.push<Menu>(
@@ -201,17 +194,35 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
           children: [
             Expanded(
               flex: 5,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Image.network(
-                    m.image, fit: BoxFit.cover,
-                    errorBuilder: (_,__,___) => Image.asset(m.image, fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: Colors.grey[200])),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Image.network(
+                        m.image, fit: BoxFit.cover,
+                        errorBuilder: (_,__,___) => Image.asset(m.image, fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: Colors.grey[200])),
+                      ),
+                    ),
                   ),
-                ),
+                  if (count > 0)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: NesaColors.terracotta,
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
+            
             Expanded(
               flex: 4,
               child: Padding(
@@ -220,17 +231,49 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(m.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
-                    RatingStars(
-                      value: m.rating,
-                      onValueChanged: (v) => setState(() => m.rating = v),
-                      starBuilder: (index, color) => Icon(Icons.star, color: color, size: 14),
-                      starCount: 5, starSize: 14, maxValue: 5, starColor: Colors.amber, valueLabelVisibility: false,
+                    Text(
+                      m.name, 
+                      maxLines: 2, 
+                      overflow: TextOverflow.ellipsis, 
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)
                     ),
+                    
+                    // --- BINTANG + ANGKA ---
+                    Row(
+                      children: [
+                        RatingStars(
+                          value: m.rating,
+                          onValueChanged: (v) => setState(() => m.rating = v),
+                          starBuilder: (index, color) => Icon(Icons.star, color: color, size: 12),
+                          starCount: 5, 
+                          starSize: 12, 
+                          maxValue: 5, 
+                          starSpacing: 1,
+                          maxValueVisibility: false, 
+                          valueLabelVisibility: false,
+                          animationDuration: const Duration(milliseconds: 1000),
+                          starOffColor: const Color(0xffe7e8ea),
+                          starColor: Colors.amber,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          m.rating.toString(), // Angka Rating (cth: 4.5)
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[600]
+                          ),
+                        )
+                      ],
+                    ),
+                    
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Rp${m.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text(
+                          'Rp${m.price.toStringAsFixed(0)}', 
+                          style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold, fontSize: 14)
+                        ),
                         InkWell(
                           onTap: () => widget.onAddCart(m),
                           child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
