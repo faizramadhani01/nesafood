@@ -44,12 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _notifEnabled,
             (v) => setState(() => _notifEnabled = v),
           ),
-          _buildSwitchTile(
-            'Mode Gelap',
-            'Tampilan aplikasi gelap',
-            _darkMode,
-            (v) => setState(() => _darkMode = v),
-          ),
+    
 
           const SizedBox(height: 24),
           _buildSectionHeader('Tentang'),
@@ -146,5 +141,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Icon(Icons.chevron_right, color: Colors.grey)
           : Text(trailing, style: GoogleFonts.poppins(color: Colors.grey)),
     ),
+  );
+
+  Widget _buildMenuItem(
+    BuildContext context,
+    {required IconData icon,
+    required String text,
+    required VoidCallback onTap}
+  ) => Card(
+    elevation: 0,
+    margin: const EdgeInsets.only(bottom: 8),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: Colors.grey.shade200),
+    ),
+    child: ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: Colors.grey[700]),
+      title: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+    ),
+  ),
   );
 }

@@ -136,5 +136,6 @@ final GoRouter _router = GoRouter(
         return DashboardAdminScreen(kantinId: kantinId);
       },
     ),
+    
   ],
 );
