@@ -45,8 +45,8 @@ class _SplashScreenState extends State<SplashScreen> {
             Center(
               child: Image.asset(
                 'assets/logo.png',
-                width: 18.w,
-                height: 18.w,
+                width: 27.w,
+                height: 27.w,
                 fit: BoxFit.contain,
               ),
             ),
@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Text(
                 'Kelompok 3',
                 style: TextStyle(
-                  fontSize: 14.sp,
+                  fontSize: 18.sp,
                   color: Colors.black,
                   fontWeight: FontWeight.w500,
                 ),

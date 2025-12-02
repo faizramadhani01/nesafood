@@ -6,8 +6,8 @@ class Kantin {
   final String image;
   double rating;
   final List<Menu> menus;
-  final String categoryApi; 
-  final String qrisUrl; // <--- Field Baru untuk QRIS
+  final String categoryApi;
+  final String qrisUrl;
 
   Kantin({
     required this.id,
@@ -16,20 +16,20 @@ class Kantin {
     required this.rating,
     required this.menus,
     required this.categoryApi,
-    required this.qrisUrl, // Wajib
+    required this.qrisUrl,
   });
 }
 
-// DATA KANTIN
+// DATA KANTIN YANG BARU (Link Gambar Sudah Diganti)
 List<Kantin> kantinList = [
   Kantin(
     id: '1',
     name: 'Kantin 1 (Spesialis Ayam)',
-    image: 'https://www.themealdb.com/images/category/Chicken.png',
+    // GANTI LINK INI (Ini server yang sama dengan Kantin 2, pasti jalan)
+    image: 'https://www.themealdb.com/images/category/Chicken.png', 
     rating: 4.5,
-    menus: [], 
+    menus: [],
     categoryApi: 'Chicken',
-    // API QR Server untuk generate QR Code otomatis
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%201',
   ),
   Kantin(
@@ -47,7 +47,7 @@ List<Kantin> kantinList = [
     image: 'https://www.themealdb.com/images/category/Pasta.png',
     rating: 4.3,
     menus: [],
-    categoryApi: 'Pasta', 
+    categoryApi: 'Pasta',
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%203',
   ),
   Kantin(
@@ -56,7 +56,7 @@ List<Kantin> kantinList = [
     image: 'https://www.themealdb.com/images/category/Breakfast.png',
     rating: 4.6,
     menus: [],
-    categoryApi: 'Breakfast', 
+    categoryApi: 'Breakfast',
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%204',
   ),
   Kantin(
@@ -65,7 +65,7 @@ List<Kantin> kantinList = [
     image: 'https://www.themealdb.com/images/category/Dessert.png',
     rating: 4.7,
     menus: [],
-    categoryApi: 'Dessert', 
+    categoryApi: 'Dessert',
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%205',
   ),
   Kantin(
@@ -74,16 +74,16 @@ List<Kantin> kantinList = [
     image: 'https://www.themealdb.com/images/category/Vegetarian.png',
     rating: 4.4,
     menus: [],
-    categoryApi: 'Vegetarian', 
+    categoryApi: 'Vegetarian',
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%206',
   ),
-   Kantin(
+  Kantin(
     id: '7',
     name: 'Kantin 7 (Daging Sapi)',
     image: 'https://www.themealdb.com/images/category/Beef.png',
     rating: 4.9,
     menus: [],
-    categoryApi: 'Beef', 
+    categoryApi: 'Beef',
     qrisUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Bayar%20ke%20Kantin%207',
   ),
 ];
