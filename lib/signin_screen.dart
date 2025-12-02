@@ -185,7 +185,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           GestureDetector(
                             onTap: () => context.go('/login'),
-                            child: Text(
+                            child: const Text(
                               "Login",
                               style: TextStyle(
                                 color: NesaColors.terracotta,

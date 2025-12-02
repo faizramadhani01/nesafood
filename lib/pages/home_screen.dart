@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
 import 'headbar_screen.dart';
@@ -12,6 +11,7 @@ import '../services/auth_service.dart';
 // Import Halaman Baru (Modular Pages)
 import 'home/landing_page.dart';
 import 'home/canteen_list_page.dart';
+
 import 'home/canteen_menu_page.dart';
 import 'home/about_page.dart';
 

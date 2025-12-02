@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     child: SwitchListTile(
       value: value,
       onChanged: onChanged,
-      activeColor: NesaColors.terracotta,
+      activeThumbColor: NesaColors.terracotta,
       title: Text(
         title,
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
