@@ -5,11 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// --- TAMBAHKAN IMPORT INI ---
+import 'services/notification_service.dart'; 
+
 // Pages
 import 'splash_screen.dart';
 import 'login_screen.dart';
-import 'signin_screen.dart'; // Register Manual
-import 'pages/complete_profile_screen.dart'; // Register Google (Lengkapi Data)
+import 'signin_screen.dart'; 
+import 'pages/complete_profile_screen.dart'; 
 import 'pages/home_screen.dart';
 import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
@@ -43,6 +46,9 @@ void main() async {
     await Firebase.initializeApp();
   }
 
+  // --- WAJIB: Inisialisasi Notifikasi ---
+  await NotificationService().init();
+
   runApp(
     Sizer(
       builder: (context, orientation, deviceType) {
@@ -60,16 +66,9 @@ void main() async {
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // 1. Splash Screen
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-
-    // 2. Login Screen
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-
-    // 3. Register Manual
     GoRoute(path: '/signin', builder: (context, state) => const SignUpScreen()),
-
-    // 4. Register Google (Lengkapi Data)
     GoRoute(
       path: '/complete-profile',
       builder: (context, state) {
@@ -77,8 +76,6 @@ final GoRouter _router = GoRouter(
         return CompleteProfileScreen(googleUser: googleUser);
       },
     ),
-
-    // 5. Home Screen
     GoRoute(
       path: '/home',
       builder: (context, state) {
@@ -86,8 +83,6 @@ final GoRouter _router = GoRouter(
         return HomeScreen(username: username);
       },
     ),
-
-    // 6. Detail Menu
     GoRoute(
       path: '/detail/:menuId',
       builder: (context, state) {
@@ -95,36 +90,27 @@ final GoRouter _router = GoRouter(
         return DetailMenuScreen(menu: menu ?? Menu.placeholder());
       },
     ),
-
-    // 7. Cart (Keranjang) - PERBAIKAN DI SINI
     GoRoute(
       path: '/cart',
       builder: (context, state) {
-        // Default kosong jika diakses langsung
         return const CartScreen(
           counts: {},
           menuMap: {},
-          kantinId: '', // Tambahkan parameter wajib ini (kosong default)
+          kantinId: '', 
         );
       },
     ),
-
-    // 8. Profile Panel
     GoRoute(
       path: '/profile',
       builder: (context, state) =>
           ProfilePanel(username: 'User', onClose: () {}),
     ),
-
-    // 9. My Profile
     GoRoute(
       path: '/my-profile',
       builder: (context, state) {
         return const MyProfileScreen();
       },
     ),
-
-    // 10. Settings
     GoRoute(
       path: '/settings',
       builder: (context, state) {
@@ -132,8 +118,6 @@ final GoRouter _router = GoRouter(
         return SettingsScreen(username: username);
       },
     ),
-
-    // 11. Riwayat Pesanan
     GoRoute(
       path: '/order-history',
       builder: (context, state) {
@@ -145,8 +129,6 @@ final GoRouter _router = GoRouter(
         return OrderHistoryScreen(username: username);
       },
     ),
-
-    // 12. Admin Dashboard
     GoRoute(
       path: '/admin-dashboard',
       builder: (context, state) {

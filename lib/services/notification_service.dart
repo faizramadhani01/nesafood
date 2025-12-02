@@ -20,10 +20,12 @@ class NotificationService {
     }
 
     // Setup Android
+    // Pastikan icon '@mipmap/ic_launcher' ada di android/app/src/main/res/
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // Setup iOS
+    // requestAlertPermission: true akan memunculkan popup izin di iOS saat pertama kali run
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
           requestSoundPermission: true,
@@ -38,6 +40,18 @@ class NotificationService {
         );
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    // --- TAMBAHAN PENTING UNTUK ANDROID 13+ ---
+    // Meminta izin notifikasi secara manual untuk Android
+    final platform = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    if (platform != null) {
+      await platform.requestNotificationsPermission();
+    }
+    // -------------------------------------------
   }
 
   // --- 1. UNTUK USER: Notifikasi "Pesanan Siap" ---
