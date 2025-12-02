@@ -15,6 +15,7 @@ class AdminAuthService {
       email: email,
       password: password,
     );
+    // Simpan ke collection 'account' sesuai request
     await _db.collection('account').doc(credential.user!.uid).set({
       'email': email,
       'role': 'admin',
@@ -25,15 +26,26 @@ class AdminAuthService {
 
   // Login admin
   Future<User?> signInAdmin(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    return credential.user;
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return credential.user;
+    } catch (e) {
+      throw Exception(
+        "Gagal login admin. Pastikan data yang dimasukkan sudah benar.",
+      );
+    }
   }
 
-  // Ambil data admin dari Firestore
+  // Ambil data admin dari Firestore (Collection 'account')
   Future<DocumentSnapshot> getAdminData(String uid) async {
     return await _db.collection('account').doc(uid).get();
+  }
+
+  // --- FITUR TAMBAHAN: LOGOUT ---
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }

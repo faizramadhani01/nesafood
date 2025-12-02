@@ -1,38 +1,51 @@
-import 'package:dio/dio.dart'; 
+import 'package:dio/dio.dart';
 import '../model/menu.dart';
 
 class MealService {
-  
-  final Dio _dio = Dio(); 
+  final Dio _dio = Dio();
 
-  static const String _baseUrl = 'https://www.themealdb.com/api/json/v1/1'; 
+  // Endpoint TheMealDB
+  static const String _baseUrl = 'https://www.themealdb.com/api/json/v1/1';
 
-  Future<List<Menu>> fetchMeals() async {
+  // 1. Fungsi Utama: Ambil menu berdasarkan kategori (Chicken, Seafood, dll)
+  Future<List<Menu>> fetchMenuByCategory(String category) async {
     try {
-      final response = await _dio.get('$_baseUrl/filter.php?c=Chicken'); 
+      // Menggunakan DIO untuk GET request
+      final response = await _dio.get(
+        '$_baseUrl/filter.php',
+        queryParameters: {'c': category},
+      );
 
-      if (response.statusCode == 200) { 
+      if (response.statusCode == 200) {
         final Map<String, dynamic> data = response.data;
-        final List<dynamic>? mealsJson = data['meals']; 
+        final List<dynamic>? mealsJson = data['meals'];
 
         if (mealsJson == null) return [];
 
-        return mealsJson.map((json) { 
+        // Mapping JSON ke Model Menu
+        return mealsJson.map((json) {
+          // Trik Simulasi Harga: Karena API tidak ada harga, kita buat random berdasarkan ID
+          double fakePrice = 15000 + (int.parse(json['idMeal']) % 20) * 1000;
+
           return Menu(
-            name: json['strMeal'] ?? 'Unknown Meal', 
-            image: json['strMealThumb'] ?? 'assets/placeholder.png', 
-            price: 25000.0, 
-            description: 'Menu spesial olahan ayam lezat dari resep internasional TheMealDB.', 
+            name: json['strMeal'] ?? 'Unknown Meal',
+            image: json['strMealThumb'] ?? '',
+            price: fakePrice,
+            description:
+                'Menu spesial dari kategori $category yang lezat dan bergizi.',
           );
-        }).toList(); 
+        }).toList();
       }
       return [];
-    } on DioException catch (e) { 
-      print('Error fetching API with Dio: $e'); 
-      return []; 
     } catch (e) {
-      print('Unknown error fetching API: $e'); //
-      return []; 
+      print('Error Fetching Menu (Dio): $e');
+      return [];
     }
+  }
+
+  // 2. Fungsi untuk Landing Page (Menu Rekomendasi)
+  // Kita ambil kategori 'Beef' sebagai contoh menu spesial di halaman depan
+  Future<List<Menu>> fetchMeals() async {
+    return fetchMenuByCategory('Beef');
   }
 }

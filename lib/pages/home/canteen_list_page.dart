@@ -86,16 +86,18 @@ class CanteenListPage extends StatelessWidget {
                     children: [
                       Expanded(
                         flex: 4,
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.horizontal(
-                            left: Radius.circular(16),
-                          ),
-                          child: Image.asset(
-                            k.image,
-                            fit: BoxFit.cover,
-                            height: double.infinity,
-                            errorBuilder: (_, __, ___) =>
-                                Container(color: Colors.grey[200]),
+                        child: SizedBox(
+                          height: 150,
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(16),
+                            ),
+                            child: Image.network(
+                              k.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  Container(color: Colors.grey[200]),
+                            ),
                           ),
                         ),
                       ),

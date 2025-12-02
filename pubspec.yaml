@@ -43,7 +43,7 @@ dependencies:
   intl: ^0.20.2
   pdf: ^3.10.1
   printing: ^5.10.0
-  dio: ^5.0.0            # Untuk API TheMealDB
+  dio: ^5.4.0            # Untuk API TheMealDB
 
   # Firebase & Auth
   firebase_core: ^4.2.1
@@ -54,6 +54,10 @@ dependencies:
   # --- TAMBAHAN BARU UNTUK PROFIL ---
   image_picker: ^1.0.7      # <--- Tambahkan ini
   firebase_storage: ^13.0.4 # <--- Tambahkan ini
+
+  flutter_local_notifications: ^17.2.3
+  permission_handler: ^11.3.1
+  universal_html: ^2.2.4
   
 flutter:
   uses-material-design: true

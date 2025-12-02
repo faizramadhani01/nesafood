@@ -8,33 +8,40 @@ class FirestoreService {
     try {
       await _db.collection('orders').add(order);
     } catch (e) {
-      throw Exception('Gagal membuat pesanan: $e');
+      throw Exception('Yah, gagal membuat pesanan. Silakan coba lagi.');
     }
   }
 
   // --- ADMIN: Mengubah Status Pesanan ---
-  // Status: pending -> cooking -> ready -> completed
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
-      await _db.collection('orders').doc(orderId).update({
-        'status': newStatus,
-      });
+      await _db.collection('orders').doc(orderId).update({'status': newStatus});
     } catch (e) {
-      throw Exception('Gagal update status: $e');
+      throw Exception(
+        'Hmm, gagal memperbarui status pesanan. Silakan coba lagi.',
+      );
     }
   }
 
-  // --- ADMIN: Ambil Semua Pesanan (Real-time) ---
-  // Bisa difilter berdasarkan kantinId jika nanti sudah multi-kantin
+  // --- ADMIN: Hapus Pesanan Spesifik (FITUR DELETE PER ITEM) ---
+  Future<void> deleteOrder(String orderId) async {
+    try {
+      await _db.collection('orders').doc(orderId).delete();
+    } catch (e) {
+      throw Exception('Yah, gagal menghapus pesanan. Silakan coba lagi.');
+    }
+  }
+
+  // --- ADMIN: Ambil Pesanan Real-time ---
   Stream<QuerySnapshot> getOrdersByKantin(String kantinId) {
     return _db
         .collection('orders')
-        // .where('kantinId', isEqualTo: kantinId) // Aktifkan jika sudah pakai ID Kantin
+        .where('kantinId', isEqualTo: kantinId)
         .orderBy('orderDate', descending: true)
         .snapshots();
   }
 
-  // --- USER: Lihat Riwayat Pesanan Sendiri (Real-time) ---
+  // --- USER: Lihat Riwayat Sendiri ---
   Stream<QuerySnapshot> getOrders(String userId) {
     return _db
         .collection('orders')
@@ -43,10 +50,13 @@ class FirestoreService {
         .snapshots();
   }
 
-  // --- USER/ADMIN: Hapus Data (Opsional) ---
+  // --- USER: Hapus Semua Riwayat ---
   Future<void> deleteOrdersForUser(String userId) async {
     try {
-      final snapshot = await _db.collection('orders').where('userId', isEqualTo: userId).get();
+      final snapshot = await _db
+          .collection('orders')
+          .where('userId', isEqualTo: userId)
+          .get();
       final batch = _db.batch();
       for (final doc in snapshot.docs) {
         batch.delete(doc.reference);

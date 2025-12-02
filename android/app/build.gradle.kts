@@ -2,17 +2,14 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
-    id("dev.flutter.flutter-gradle-plugin") 
+    id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
     namespace = "com.example.nesafood"
-    compileSdk = flutter.compileSdkVersion
-    
-    // --- GANTI BAGIAN INI ---
-    // Hapus atau komentari baris lama: ndkVersion = flutter.ndkVersion
-    ndkVersion = "29.0.14206865" 
-    // ------------------------
+    compileSdk = 34
+
+    ndkVersion = "29.0.14206865"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -25,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.nesafood"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 21
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

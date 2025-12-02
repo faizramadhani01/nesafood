@@ -289,11 +289,12 @@ class _LandingPageState extends State<LandingPage> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.asset(
+                  // PERBAIKAN: Menggunakan Image.network karena data berupa URL
+                  child: Image.network(
                     k.image,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) =>
-                        Container(color: Colors.grey),
+                        Container(color: Colors.grey[300]),
                   ),
                 ),
                 Positioned.fill(

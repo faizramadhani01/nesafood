@@ -81,9 +81,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       backgroundColor: NesaColors.background,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(horizontal: 5.w), // Gunakan Sizer
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 6.w),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
@@ -103,31 +103,33 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         ? NetworkImage(widget.googleUser.photoURL!)
                         : null,
                     child: widget.googleUser.photoURL == null
-                        ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                        ? Icon(Icons.person, size: 40.sp) // Gunakan Sizer
                         : null,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 2.h), // Gunakan Sizer
                   Text(
                     "Lengkapi Data",
                     style: GoogleFonts.poppins(
-                      fontSize: 24,
+                      fontSize: 18.sp, // Gunakan Sizer
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 1.h), // Gunakan Sizer
                   Text(
                     "Satu langkah lagi untuk masuk!",
-                    style: GoogleFonts.poppins(color: Colors.grey),
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.sp, // Gunakan Sizer
+                      color: Colors.grey,
+                    ),
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 3.h), // Gunakan Sizer
 
                   _buildTextField(
                     label: "Nama Lengkap",
                     controller: _nameCtrl,
                     icon: Icons.person,
                   ),
-                  const SizedBox(height: 16),
-
+                  SizedBox(height: 2.h), // Gunakan Sizer
                   // Email Read Only
                   _buildTextField(
                     label: "Email (Terkunci)",
@@ -136,7 +138,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     readOnly: true,
                     fillColor: Colors.grey.shade200,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 2.h), // Gunakan Sizer
 
                   _buildTextField(
                     label: "Nomor WhatsApp",
@@ -146,45 +148,31 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     validator: (v) =>
                         (v == null || v.isEmpty) ? "Wajib diisi" : null,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 2.h), // Gunakan Sizer
 
                   _buildTextField(
                     label: "Buat Password Login",
                     controller: _passwordCtrl,
                     icon: Icons.lock,
                     isPassword: true,
-                    validator: (v) =>
-                        (v != null && v.length < 6) ? "Min 6 karakter" : null,
                   ),
 
-                  const SizedBox(height: 32),
-
+                  SizedBox(height: 3.h), // Gunakan Sizer
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleFinalize,
+                      onPressed: _handleFinalize,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: NesaColors.terracotta,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        padding: EdgeInsets.symmetric(vertical: 1.5.h),
+                      ),
+                      child: Text(
+                        "Simpan",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp, // Gunakan Sizer
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              "SIMPAN & MASUK",
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
                     ),
                   ),
                 ],

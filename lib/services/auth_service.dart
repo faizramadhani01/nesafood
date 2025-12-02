@@ -16,18 +16,18 @@ class AuthService {
       email: email,
       password: password,
     );
-    
+
     // 1. Simpan data user
     await _db.collection('users').doc(credential.user!.uid).set({
       'email': email,
       'nama': name,
       'role': 'user',
       'kantinId': null,
-      'phone': '', 
+      'phone': '',
       'photoUrl': null,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    
+
     await credential.user!.updateDisplayName(name);
 
     // 2. KIRIM EMAIL VERIFIKASI (WAJIB)
@@ -38,21 +38,20 @@ class AuthService {
     return credential.user;
   }
 
-  // --- LOGIN MANUAL (DENGAN CEK VERIFIKASI) ---
+  // --- LOGIN MANUAL ---
   Future<User?> signIn(String email, String password) async {
     final credential = await _auth.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
 
-    // Cek apakah email sudah diverifikasi?
     if (credential.user != null) {
       if (!credential.user!.emailVerified) {
-        // Jika belum, logout paksa & lempar error
         await _auth.signOut();
         throw FirebaseAuthException(
           code: 'email-not-verified',
-          message: 'Email belum diverifikasi. Silakan cek inbox email Anda.',
+          message:
+              'Email kamu belum diverifikasi. Cek inbox emailmu untuk verifikasi.',
         );
       }
     }
@@ -66,17 +65,19 @@ class AuthService {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
       return userCredential.user;
     } catch (e) {
-      print("Error Google Sign In: $e");
-      rethrow;
+      throw Exception("Gagal login dengan Google. Silakan coba lagi nanti.");
     }
   }
 
@@ -108,7 +109,7 @@ class AuthService {
     if (password.isNotEmpty) {
       await _auth.currentUser?.updatePassword(password);
     }
-    
+
     await _auth.currentUser?.updateDisplayName(name);
   }
 
@@ -117,7 +118,7 @@ class AuthService {
     await _googleSignIn.signOut();
     await _auth.signOut();
   }
-  
+
   // --- GET USER DATA ---
   Future<DocumentSnapshot> getUserData(String uid) async {
     return await _db.collection('users').doc(uid).get();
@@ -137,7 +138,7 @@ class AuthService {
     final ref = _storage.ref().child('profile_images').child('$uid.jpg');
     await ref.putFile(imageFile);
     final url = await ref.getDownloadURL();
-    
+
     await _db.collection('users').doc(uid).update({'photoUrl': url});
     await _auth.currentUser?.updatePhotoURL(url);
     return url;
