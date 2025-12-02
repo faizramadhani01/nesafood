@@ -1,10 +1,13 @@
 import 'dart:async'; // Tambahkan ini untuk StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
+=======
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart'; // Tambahkan ini
 
 // Import Model & Service
+>>>>>>> ca9f5f6e97de9acbfacdeeb3535327dcfbefbc39
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
 import '../services/auth_service.dart';
@@ -20,6 +23,7 @@ import 'cart_screen.dart';
 // Import Halaman Tab
 import 'home/landing_page.dart';
 import 'home/canteen_list_page.dart';
+
 import 'home/canteen_menu_page.dart';
 import 'home/about_page.dart';
 

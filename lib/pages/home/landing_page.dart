@@ -280,7 +280,7 @@ class _LandingPageState extends State<LandingPage> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(color: Colors.black12, blurRadius: 10),
             ],
           ),
@@ -299,7 +299,7 @@ class _LandingPageState extends State<LandingPage> {
                 ),
                 Positioned.fill(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           Colors.black87,
