@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'package:lottie/lottie.dart';
-import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -70,12 +69,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
-
     // Ukuran responsif yang proporsional
-    double logoSize = isMobile ? 35.w : 28.w; // Logo lebih besar
-    double loadingSize = isMobile ? 25.w : 18.w; // Loading lebih besar lagi
+    double logoSize = 30.w; // Ukuran logo responsif
+    double loadingSize = 20.w; // Ukuran animasi loading responsif
 
     return Scaffold(
       backgroundColor: Colors.white, // Background putih bersih
@@ -84,40 +80,40 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             // --- BAGIAN TENGAH (LOGO & LOADING) ---
             Center(
-              child: FadeTransition(
-                opacity: _opacityAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Logo
-                      Image.asset(
-                        'assets/logo.png',
-                        width: logoSize,
-                        height: logoSize,
-                        fit: BoxFit.contain,
-                      ),
-
-                      SizedBox(height: 4.h), // Jarak yang pas
-                      // Loading Animation (Kecil & Minimalis)
-                      SizedBox(
-                        width: loadingSize,
-                        height: loadingSize,
-                        child: Lottie.asset(
-                          'assets/loading_animation.json',
+              child: SingleChildScrollView(
+                child: FadeTransition(
+                  opacity: _opacityAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo
+                        Image.asset(
+                          'assets/logo.png',
+                          width: logoSize,
+                          height: logoSize,
                           fit: BoxFit.contain,
                         ),
-                      ),
-                    ],
+
+                        SizedBox(height: 4.h), // Jarak yang pas
+                        // Loading Animation (Kecil & Minimalis)
+                        SizedBox(
+                          width: loadingSize,
+                          height: loadingSize,
+                          child: Lottie.asset(
+                            'assets/loading_animation.json',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
 
             // --- BAGIAN BAWAH (FOOTER) ---
-            // Footer dipisah menggunakan Align/Positioned agar tetap di bawah
-            // walaupun layar di-rotate atau ukuran berubah.
             Align(
               alignment: Alignment.bottomCenter,
               child: FadeTransition(
@@ -131,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen>
                         'Created by',
                         style: TextStyle(
                           fontFamily: 'Roboto',
-                          fontSize: 12.sp,
+                          fontSize: 10.sp, // Responsif
                           color: Colors.grey[400],
                           letterSpacing: 1.0,
                         ),
@@ -140,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'Kelompok 3',
                         style: TextStyle(
-                          fontSize: 16.sp,
+                          fontSize: 12.sp, // Responsif
                           color: Colors.black87,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,

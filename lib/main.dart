@@ -6,13 +6,13 @@ import 'package:sizer/sizer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 // --- TAMBAHKAN IMPORT INI ---
-import 'services/notification_service.dart'; 
+import 'services/notification_service.dart';
 
 // Pages
 import 'splash_screen.dart';
 import 'login_screen.dart';
-import 'signin_screen.dart'; 
-import 'pages/complete_profile_screen.dart'; 
+import 'signin_screen.dart';
+import 'pages/complete_profile_screen.dart';
 import 'pages/home_screen.dart';
 import 'pages/detail_menu_screen.dart';
 import 'pages/cart_screen.dart';
@@ -87,18 +87,28 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/detail/:menuId',
       builder: (context, state) {
+        // Ambil data menu dari state.extra
         final menu = state.extra as Menu?;
-        return DetailMenuScreen(menu: menu ?? Menu.placeholder());
+        if (menu == null) {
+          // Jika menu tidak ditemukan, tampilkan pesan error atau halaman kosong
+          return Scaffold(
+            appBar: AppBar(title: const Text('Detail Menu')),
+            body: const Center(child: Text('Menu tidak ditemukan.')),
+          );
+        }
+        // Kirim data menu ke DetailMenuScreen
+        return DetailMenuScreen(
+          menu: menu,
+          onAddCart: (menu) {
+            // Tambahkan logika untuk menambahkan ke keranjang
+          },
+        );
       },
     ),
     GoRoute(
       path: '/cart',
       builder: (context, state) {
-        return const CartScreen(
-          counts: {},
-          menuMap: {},
-          kantinId: '', 
-        );
+        return const CartScreen(counts: {}, menuMap: {}, kantinId: '');
       },
     ),
     GoRoute(

@@ -7,7 +7,7 @@ import '../../model/menu.dart';
 import '../../model/kantin_data.dart';
 import '../../theme.dart';
 import '../../services/meal_service.dart';
-import '../detail_menu_screen.dart'; 
+import '../detail_menu_screen.dart';
 
 class LandingPage extends StatefulWidget {
   final String username;
@@ -16,7 +16,7 @@ class LandingPage extends StatefulWidget {
   final Function(Menu) onAddCart;
   final Function(Menu) onRemoveCart;
   final Map<String, int> itemCounts;
-  final Function(Kantin) onSelectKantin; 
+  final Function(Kantin) onSelectKantin;
 
   const LandingPage({
     super.key,
@@ -62,51 +62,64 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     final heroItems = kantinList.take(5).toList();
-    
+
     final List<Menu> allMenus = [
       ...apiMenus,
       ...kantinList.expand((k) => k.menus),
     ];
 
     final bool isSearching = widget.searchQuery.isNotEmpty;
-    
-    List<Menu> displayedMenus = isSearching 
-        ? allMenus.where((m) => m.name.toLowerCase().contains(widget.searchQuery.toLowerCase())).toList()
+
+    List<Menu> displayedMenus = isSearching
+        ? allMenus
+              .where(
+                (m) => m.name.toLowerCase().contains(
+                  widget.searchQuery.toLowerCase(),
+                ),
+              )
+              .toList()
         : apiMenus;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      padding: EdgeInsets.symmetric(
+        vertical: 3.h,
+        horizontal: 4.w,
+      ), // Responsif
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
+          Text(
+            'Halo, ${widget.username}!',
+            style: GoogleFonts.poppins(
+              fontSize: 3.h, // Responsif
+              fontWeight: FontWeight.bold,
+              color: NesaColors.terracotta,
+            ),
+          ),
+          Text(
+            'Mau makan apa hari ini?',
+            style: GoogleFonts.poppins(
+              fontSize: 2.h, // Responsif
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 3.h), // Responsif
+
           if (isSearching) ...[
             if (displayedMenus.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 50),
-                  child: Text("Menu tidak ditemukan", style: GoogleFonts.poppins()),
+                  child: Text(
+                    "Menu tidak ditemukan",
+                    style: GoogleFonts.poppins(),
+                  ),
                 ),
               )
             else
               _buildGridMenu(displayedMenus),
-          ] 
-          else ...[
-            Text(
-              'Halo, ${widget.username}!',
-              style: GoogleFonts.poppins(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: NesaColors.terracotta,
-              ),
-            ),
-            Text(
-              'Mau makan apa hari ini?',
-              style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
-            ),
-            const SizedBox(height: 24),
-
+          ] else ...[
             SizedBox(
               height: 24.h,
               child: PageView.builder(
@@ -132,7 +145,7 @@ class _LandingPageState extends State<LandingPage> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             if (isLoadingApi)
               const Center(
                 child: CircularProgressIndicator(color: NesaColors.terracotta),
@@ -157,7 +170,7 @@ class _LandingPageState extends State<LandingPage> {
         maxCrossAxisExtent: 280,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.68, 
+        childAspectRatio: 0.68,
       ),
       itemBuilder: (context, i) => _menuItemCard(menus[i]),
     );
@@ -166,19 +179,18 @@ class _LandingPageState extends State<LandingPage> {
   Widget _menuItemCard(Menu m) {
     final count = widget.itemCounts[m.name] ?? 0;
     final isNetwork = m.image.startsWith('http');
-    
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DetailMenuScreen(
-              menu: m, 
-              onAddCart: widget.onAddCart
-            ),
+            builder: (context) =>
+                DetailMenuScreen(menu: m, onAddCart: widget.onAddCart),
           ),
         ).then((updatedMenu) {
-           if (updatedMenu != null) setState(() => m.rating = updatedMenu.rating);
+          if (updatedMenu != null)
+            setState(() => m.rating = updatedMenu.rating);
         });
       },
       borderRadius: BorderRadius.circular(16),
@@ -211,12 +223,14 @@ class _LandingPageState extends State<LandingPage> {
                           ? Image.network(
                               m.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
+                              errorBuilder: (_, __, ___) =>
+                                  Container(color: Colors.grey[200]),
                             )
                           : Image.asset(
                               m.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
+                              errorBuilder: (_, __, ___) =>
+                                  Container(color: Colors.grey[200]),
                             ),
                     ),
                   ),
@@ -229,7 +243,10 @@ class _LandingPageState extends State<LandingPage> {
                         backgroundColor: NesaColors.terracotta,
                         child: Text(
                           '$count',
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
@@ -248,9 +265,12 @@ class _LandingPageState extends State<LandingPage> {
                       m.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
-                    
+
                     // --- BINTANG + ANGKA ---
                     Row(
                       children: [
@@ -259,15 +279,19 @@ class _LandingPageState extends State<LandingPage> {
                           onValueChanged: (v) {
                             // setState(() => m.rating = v); // Read-only di sini
                           },
-                          starBuilder: (index, color) => Icon(Icons.star, color: color, size: 12),
-                          starCount: 5, 
-                          starSize: 12, 
-                          maxValue: 5, 
+                          starBuilder: (index, color) =>
+                              Icon(Icons.star, color: color, size: 12),
+                          starCount: 5,
+                          starSize: 12,
+                          maxValue: 5,
                           starSpacing: 1,
                           maxValueVisibility: false,
                           valueLabelVisibility: false,
                           animationDuration: const Duration(milliseconds: 1000),
-                          valueLabelPadding: const EdgeInsets.symmetric(vertical: 1, horizontal: 8),
+                          valueLabelPadding: const EdgeInsets.symmetric(
+                            vertical: 1,
+                            horizontal: 8,
+                          ),
                           valueLabelMargin: const EdgeInsets.only(right: 8),
                           starOffColor: const Color(0xffe7e8ea),
                           starColor: Colors.amber,
@@ -278,9 +302,9 @@ class _LandingPageState extends State<LandingPage> {
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey[600]
+                            color: Colors.grey[600],
                           ),
-                        )
+                        ),
                       ],
                     ),
 
@@ -289,11 +313,17 @@ class _LandingPageState extends State<LandingPage> {
                       children: [
                         Text(
                           'Rp${m.price.toStringAsFixed(0)}',
-                          style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.poppins(
+                            color: NesaColors.terracotta,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         InkWell(
                           onTap: () => widget.onAddCart(m),
-                          child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
+                          child: const Icon(
+                            Icons.add_circle,
+                            color: NesaColors.terracotta,
+                          ),
                         ),
                       ],
                     ),
@@ -309,7 +339,7 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _heroCard(Kantin k) {
     return InkWell(
-      onTap: () => widget.onSelectKantin(k), 
+      onTap: () => widget.onSelectKantin(k),
       child: Padding(
         padding: const EdgeInsets.only(right: 16),
         child: Container(
@@ -325,7 +355,8 @@ class _LandingPageState extends State<LandingPage> {
                   child: Image.network(
                     k.image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: Colors.grey[300]),
                   ),
                 ),
                 Positioned.fill(
