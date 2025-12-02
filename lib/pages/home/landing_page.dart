@@ -8,17 +8,19 @@ import '../../services/meal_service.dart';
 
 class LandingPage extends StatefulWidget {
   final String username;
-  final VoidCallback onSeeAllKantin; // Callback ke navigasi
+  final String searchQuery;
+  final VoidCallback onSeeAllKantin;
   final Function(Menu) onAddCart;
   final Function(Menu) onRemoveCart;
   final Map<String, int> itemCounts;
-
-  // Callback untuk pindah ke kantin spesifik dari Hero Card
-  final Function(Kantin) onSelectKantin;
+  
+  // Callback wajib agar bisa diklik
+  final Function(Kantin) onSelectKantin; 
 
   const LandingPage({
     super.key,
     required this.username,
+    required this.searchQuery,
     required this.onSeeAllKantin,
     required this.onAddCart,
     required this.onRemoveCart,
@@ -59,7 +61,18 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     final heroItems = kantinList.take(5).toList();
-    // final featuredMenus dihapus karena tidak lagi dipakai
+    
+    // Gabung menu API + Lokal untuk pencarian
+    final List<Menu> allMenus = [
+      ...apiMenus,
+      ...kantinList.expand((k) => k.menus),
+    ];
+
+    final bool isSearching = widget.searchQuery.isNotEmpty;
+    
+    List<Menu> displayedMenus = isSearching 
+        ? allMenus.where((m) => m.name.toLowerCase().contains(widget.searchQuery.toLowerCase())).toList()
+        : apiMenus;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -67,58 +80,75 @@ class _LandingPageState extends State<LandingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sapaan
-          Text(
-            'Halo, ${widget.username}!',
-            style: GoogleFonts.poppins(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: NesaColors.terracotta,
-            ),
-          ),
-          Text(
-            'Mau makan apa hari ini?',
-            style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
-          ),
-          const SizedBox(height: 24),
-
-          // Hero Carousel
-          SizedBox(
-            height: 24.h,
-            child: PageView.builder(
-              controller: _heroController,
-              padEnds: false,
-              itemCount: heroItems.length,
-              itemBuilder: (context, i) => _heroCard(heroItems[i]),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // API Section
-          Row(
-            children: [
-              const Icon(Icons.public, color: NesaColors.terracotta),
-              const SizedBox(width: 8),
-              Text(
-                'Menu Spesial (Online)',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (isLoadingApi)
-            const Center(
-              child: CircularProgressIndicator(color: NesaColors.terracotta),
-            )
-          else
-            _buildGridMenu(apiMenus),
-
-          const SizedBox(height: 60),
           
-          // --- BAGIAN REKOMENDASI LOKAL TELAH DIHAPUS DI SINI ---
+          // --- KONDISI 1: SEDANG MENCARI ---
+          if (isSearching) ...[
+            // Tidak ada widget Text judul di sini (BERSIH)
+
+            if (displayedMenus.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50),
+                  child: Text("Menu tidak ditemukan", style: GoogleFonts.poppins()),
+                ),
+              )
+            else
+              _buildGridMenu(displayedMenus),
+          ] 
+          
+          // --- KONDISI 2: TAMPILAN NORMAL (HOME) ---
+          else ...[
+            Text(
+              'Halo, ${widget.username}!',
+              style: GoogleFonts.poppins(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: NesaColors.terracotta,
+              ),
+            ),
+            Text(
+              'Mau makan apa hari ini?',
+              style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+            ),
+            const SizedBox(height: 24),
+
+            // Hero Carousel (Gambar Kantin)
+            SizedBox(
+              height: 24.h,
+              child: PageView.builder(
+                controller: _heroController,
+                padEnds: false,
+                itemCount: heroItems.length,
+                itemBuilder: (context, i) => _heroCard(heroItems[i]),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            Row(
+              children: [
+                const Icon(Icons.public, color: NesaColors.terracotta),
+                const SizedBox(width: 8),
+                Text(
+                  'Menu Spesial (Online)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            if (isLoadingApi)
+              const Center(
+                child: CircularProgressIndicator(color: NesaColors.terracotta),
+              )
+            else
+              _buildGridMenu(apiMenus),
+
+            const SizedBox(height: 60),
+            // Bagian "Rekomendasi Lokal" SUDAH DIHAPUS.
+          ],
         ],
       ),
     );
@@ -172,16 +202,12 @@ class _LandingPageState extends State<LandingPage> {
                         ? Image.network(
                             m.image,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey[200],
-                            ),
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
                           )
                         : Image.asset(
                             m.image,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey[200],
-                            ),
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]),
                           ),
                   ),
                 ),
@@ -194,10 +220,7 @@ class _LandingPageState extends State<LandingPage> {
                       backgroundColor: NesaColors.terracotta,
                       child: Text(
                         '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
                   ),
@@ -216,27 +239,18 @@ class _LandingPageState extends State<LandingPage> {
                     m.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Rp${m.price.toStringAsFixed(0)}',
-                        style: GoogleFonts.poppins(
-                          color: NesaColors.terracotta,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold),
                       ),
                       InkWell(
                         onTap: () => widget.onAddCart(m),
-                        child: const Icon(
-                          Icons.add_circle,
-                          color: NesaColors.terracotta,
-                        ),
+                        child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
                       ),
                     ],
                   ),
@@ -251,15 +265,15 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget _heroCard(Kantin k) {
     return InkWell(
-      onTap: () => widget.onSelectKantin(k),
+      // INI YANG MEMBUAT GAMBAR BISA DIKLIK:
+      onTap: () => widget.onSelectKantin(k), 
+      
       child: Padding(
         padding: const EdgeInsets.only(right: 16),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(color: Colors.black12, blurRadius: 10),
-            ],
+            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
@@ -269,18 +283,14 @@ class _LandingPageState extends State<LandingPage> {
                   child: Image.network(
                     k.image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: Colors.grey[300]),
+                    errorBuilder: (_, __, ___) => Container(color: Colors.grey[300]),
                   ),
                 ),
                 Positioned.fill(
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.black87,
-                          Colors.transparent,
-                        ],
+                        colors: [Colors.black87, Colors.transparent],
                         begin: Alignment.bottomLeft,
                         end: Alignment.topRight,
                       ),

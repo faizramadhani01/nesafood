@@ -9,19 +9,16 @@ import '../detail_menu_screen.dart';
 
 class CanteenMenuPage extends StatefulWidget {
   final Kantin kantin;
+  final String searchQuery; // <--- 1. TAMBAHKAN INI
   final VoidCallback onBack;
-  // Update Type Function: Menerima Menu saja (Wrapper di HomeScreen yang handle ID)
-  // ATAU kita panggil dengan ID di sini?
-  // Lebih baik: Biarkan HomeScreen mengatur ID lewat wrapper yang kita buat di atas.
-  // Jadi signature di sini TETAP (Menu) -> void, tapi di HomeScreen kita bungkus.
   final Function(Menu) onAddCart;
-
   final Function(Menu) onRemoveCart;
   final Map<String, int> itemCounts;
 
   const CanteenMenuPage({
     super.key,
     required this.kantin,
+    required this.searchQuery, // <--- 2. WAJIB DIISI
     required this.onBack,
     required this.onAddCart,
     required this.onRemoveCart,
@@ -45,135 +42,139 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
 
   Future<void> _loadMenuFromApi() async {
     try {
-      final menus = await _mealService.fetchMenuByCategory(
+      final apiMenus = await _mealService.fetchMenuByCategory(
         widget.kantin.categoryApi,
       );
       if (mounted) {
         setState(() {
-          _menus = menus;
+          _menus = [...apiMenus, ...widget.kantin.menus];
+          // Hapus duplikat (opsional)
+          final ids = <String>{};
+          _menus.retainWhere((x) => ids.add(x.name));
           _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _menus = widget.kantin.menus;
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // --- 3. LOGIKA FILTER PENCARIAN DI SINI ---
+    final bool isSearching = widget.searchQuery.isNotEmpty;
+    
+    // Jika sedang mencari, filter _menus. Jika tidak, pakai semua _menus.
+    final List<Menu> displayedMenus = isSearching
+        ? _menus.where((m) => 
+            m.name.toLowerCase().contains(widget.searchQuery.toLowerCase())
+          ).toList()
+        : _menus;
+
     return Scaffold(
       backgroundColor: NesaColors.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                InkWell(
-                  onTap: widget.onBack,
-                  borderRadius: BorderRadius.circular(50),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: 18,
-                      color: Colors.black87,
+            // HEADER
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: NesaColors.background,
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: widget.onBack,
+                    borderRadius: BorderRadius.circular(50),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.black87),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.kantin.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.kantin.name,
+                          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      Text(
-                        'Menu Spesial: ${widget.kantin.categoryApi}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: NesaColors.terracotta,
+                        Text(
+                          'Kategori: ${widget.kantin.categoryApi}',
+                          style: GoogleFonts.poppins(fontSize: 13, color: NesaColors.terracotta),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 50),
-                  child: CircularProgressIndicator(
-                    color: NesaColors.terracotta,
-                  ),
-                ),
-              )
-            else if (_menus.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 50),
-                  child: Text(
-                    "Menu belum tersedia",
-                    style: GoogleFonts.poppins(color: Colors.grey),
-                  ),
-                ),
-              )
-            else
-              _buildGridSection('Daftar Menu', _menus),
-            const SizedBox(height: 40),
+            
+            // CONTENT
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: NesaColors.terracotta))
+                  : displayedMenus.isEmpty // Cek hasil filter kosong atau tidak
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.search_off, size: 40, color: Colors.grey),
+                              const SizedBox(height: 8),
+                              Text(
+                                isSearching 
+                                  ? "Menu tidak ditemukan" 
+                                  : "Menu belum tersedia",
+                                style: GoogleFonts.poppins(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Text(
+                                  isSearching 
+                                    ? 'Hasil Pencarian' 
+                                    : 'Daftar Menu',
+                                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: displayedMenus.length, // Pakai list yang sudah difilter
+                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 250,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 0.70,
+                                ),
+                                itemBuilder: (context, i) => _menuItemCard(displayedMenus[i]),
+                              ),
+                              const SizedBox(height: 80),
+                            ],
+                          ),
+                        ),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGridSection(String title, List<Menu> menus) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            children: [
-              Container(width: 4, height: 24, color: NesaColors.terracotta),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: menus.length,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 250,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.70,
-          ),
-          itemBuilder: (context, i) => _menuItemCard(menus[i]),
-        ),
-      ],
     );
   }
 
@@ -183,16 +184,9 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
       onTap: () {
         Navigator.push<Menu>(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DetailMenuScreen(menu: m, onAddCart: widget.onAddCart),
-          ),
+          MaterialPageRoute(builder: (context) => DetailMenuScreen(menu: m, onAddCart: widget.onAddCart)),
         ).then((updatedMenu) {
-          if (updatedMenu != null) {
-            setState(() {
-              m.rating = updatedMenu.rating;
-            });
-          }
+          if (updatedMenu != null) setState(() => m.rating = updatedMenu.rating);
         });
       },
       borderRadius: BorderRadius.circular(16),
@@ -200,56 +194,22 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 5,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Image.network(
-                        m.image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Container(color: Colors.grey[200]),
-                      ),
-                    ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Image.network(
+                    m.image, fit: BoxFit.cover,
+                    errorBuilder: (_,__,___) => Image.asset(m.image, fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: Colors.grey[200])),
                   ),
-                  if (count > 0)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: NesaColors.terracotta,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$count',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
             Expanded(
@@ -260,72 +220,21 @@ class _CanteenMenuPageState extends State<CanteenMenuPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      m.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        height: 1.2,
-                      ),
-                    ),
-                    // Rating bintang menggunakan flutter_rating_stars
+                    Text(m.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
                     RatingStars(
                       value: m.rating,
-                      onValueChanged: (val) {
-                        setState(() {
-                          m.rating = val;
-                        });
-                      },
-                      starBuilder: (index, color) =>
-                          Icon(Icons.star, color: color, size: 14),
-                      starCount: 5,
-                      starSize: 14,
-                      valueLabelRadius: 10,
-                      maxValue: 5,
+                      onValueChanged: (v) => setState(() => m.rating = v),
+                      starBuilder: (index, color) => Icon(Icons.star, color: color, size: 14),
+                      starCount: 5, starSize: 14, maxValue: 5, starColor: Colors.amber, valueLabelVisibility: false,
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Rp${m.price.toStringAsFixed(0)}',
-                          style: GoogleFonts.poppins(
-                            color: NesaColors.terracotta,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
+                        Text('Rp${m.price.toStringAsFixed(0)}', style: GoogleFonts.poppins(color: NesaColors.terracotta, fontWeight: FontWeight.bold, fontSize: 14)),
+                        InkWell(
+                          onTap: () => widget.onAddCart(m),
+                          child: const Icon(Icons.add_circle, color: NesaColors.terracotta),
                         ),
-                        if (count == 0)
-                          InkWell(
-                            onTap: () => widget.onAddCart(m),
-                            child: const Icon(
-                              Icons.add_circle,
-                              color: NesaColors.terracotta,
-                            ),
-                          )
-                        else
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () => widget.onRemoveCart(m),
-                                child: const Icon(
-                                  Icons.remove_circle_outline,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              InkWell(
-                                onTap: () => widget.onAddCart(m),
-                                child: const Icon(
-                                  Icons.add_circle_rounded,
-                                  size: 20,
-                                  color: NesaColors.terracotta,
-                                ),
-                              ),
-                            ],
-                          ),
                       ],
                     ),
                   ],

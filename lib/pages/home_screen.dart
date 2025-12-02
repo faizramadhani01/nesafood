@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart'; 
 
+// --- PASTIKAN IMPORT INI SESUAI DENGAN LOKASI FILE ANDA ---
 import '../model/menu.dart';
 import '../model/kantin_data.dart';
 import '../services/auth_service.dart';
@@ -15,9 +16,9 @@ import 'headbar_screen.dart';
 import '../profile_panel_screen.dart';
 import 'cart_screen.dart';
 
+// Halaman-halaman Fragment
 import 'home/landing_page.dart';
 import 'home/canteen_list_page.dart';
-
 import 'home/canteen_menu_page.dart';
 import 'home/about_page.dart';
 
@@ -31,19 +32,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
-  Kantin? activeKantin;
+  
+  // VARIABEL PENTING: Menyimpan data kantin yang sedang dibuka
+  Kantin? activeKantin; 
+  
   bool showProfilePanel = false;
   late String displayUsername;
 
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
 
+  // State Keranjang Belanja
   final Map<String, int> itemCounts = {};
   final Map<String, Menu> cartItems = {};
-
   String? currentCartKantinId;
 
-  String searchQuery = '';
+  // Variabel Pencarian
+  String searchQuery = ''; 
 
   StreamSubscription? _orderSubscription;
 
@@ -62,39 +67,41 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // --- LOGIKA BUKA/TUTUP DETAIL KANTIN ---
+  void _openKantinDetail(Kantin k) {
+    setState(() {
+      activeKantin = k; 
+      // Kita TIDAK mereset searchQuery agar user bisa langsung cari di kantin tsb
+      // atau jika ingin reset, uncomment baris bawah ini:
+      // searchQuery = ''; 
+    });
+  }
+
+  void _closeKantinDetail() {
+    setState(() {
+      activeKantin = null;
+    });
+  }
+
+  // --- SETUP NOTIFIKASI & AUTH ---
   Future<void> _setupNotifications() async {
     await NotificationService().init();
-
     await Permission.notification.request();
   }
 
   void _listenToOrderUpdates() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    _orderSubscription = _firestoreService.getOrders(user.uid).listen((
-      snapshot,
-    ) {
+    _orderSubscription = _firestoreService.getOrders(user.uid).listen((snapshot) {
       for (var change in snapshot.docChanges) {
-        
         if (change.type == DocumentChangeType.modified) {
           final data = change.doc.data() as Map<String, dynamic>;
-          final status = data['status'];
-
-          if (status == 'ready') {
-            String menuName = 'Makanan kamu';
-            final items = (data['items'] as List<dynamic>?) ?? [];
-
-            if (items.isNotEmpty) {
-              menuName = items[0]['menu_name'];
-              if (items.length > 1) {
-                menuName += " & ${items.length - 1} lainnya";
-              }
-            }
-
-            NotificationService().showOrderReadyNotification(
-              change.doc.id,
-              menuName,
-            );
+          if (data['status'] == 'ready') {
+            // Notifikasi pesanan siap
+             NotificationService().showOrderReadyNotification(
+               change.doc.id, 
+               "Pesanan kamu sudah siap diambil!"
+             );
           }
         }
       }
@@ -113,10 +120,12 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       } catch (e) {
+        // Ignore error
       }
     }
   }
 
+  // --- LOGIKA KERANJANG (CART) ---
   int get cartTotalCount => itemCounts.values.fold(0, (a, b) => a + b);
 
   void _addMenuToCart(Menu m, String originKantinId) {
@@ -125,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
         currentCartKantinId = originKantinId;
       }
 
-      if (currentCartKantinId != null &&
-          currentCartKantinId != originKantinId) {
+      // Validasi: Tidak boleh pesan dari 2 kantin berbeda sekaligus
+      if (currentCartKantinId != null && currentCartKantinId != originKantinId) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Selesaikan pesanan di kantin sebelumnya dulu!"),
@@ -148,7 +157,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (v <= 0) {
         itemCounts.remove(m.name);
         cartItems.remove(m.name);
-
         if (itemCounts.isEmpty) {
           currentCartKantinId = null;
         }
@@ -172,14 +180,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((result) {
       if (result != null) {
         setState(() {
-          itemCounts
-            ..clear()
-            ..addAll(result);
-          cartItems.removeWhere(
-            (name, _) =>
-                !(itemCounts.containsKey(name) && itemCounts[name]! > 0),
-          );
-
+          itemCounts..clear()..addAll(result);
+          cartItems.removeWhere((name, _) => !(itemCounts.containsKey(name) && itemCounts[name]! > 0));
           if (itemCounts.isEmpty) {
             currentCartKantinId = null;
           }
@@ -191,9 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void handleMenuTap(int index) {
     setState(() {
       selectedIndex = index;
-      activeKantin = null;
+      activeKantin = null; // Reset tampilan detail kantin saat pindah tab
       showProfilePanel = false;
-      searchQuery = '';
+      searchQuery = ''; // Reset pencarian
     });
   }
 
@@ -201,17 +203,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: NesaColors.background,
+      
+      // HEADER APLIKASI
       appBar: HeadBar(
         title: 'Nesa Food',
         selectedIndex: selectedIndex,
         onMenuTap: handleMenuTap,
-        onProfileTap: () =>
-            setState(() => showProfilePanel = !showProfilePanel),
+        onProfileTap: () => setState(() => showProfilePanel = !showProfilePanel),
+        
+        // Update Search Query saat mengetik
         onSearch: (q) => setState(() => searchQuery = q),
         searchQuery: searchQuery,
+        
         cartCount: cartTotalCount,
         onCartTap: _openCart,
       ),
+      
       body: Stack(
         children: [
           Center(
@@ -220,6 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _buildMainContent(),
             ),
           ),
+          
+          // PANEL PROFIL (Pop up dari kanan atas)
           if (showProfilePanel)
             Positioned(
               top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
@@ -235,47 +244,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMainContent() {
-    if (searchQuery.isNotEmpty) {
-      return Center(child: Text("Hasil pencarian: $searchQuery"));
+    // 1. CEK DETAIL KANTIN
+    // Jika user sedang membuka kantin, tampilkan CanteenMenuPage
+    if (activeKantin != null) {
+      return CanteenMenuPage(
+        kantin: activeKantin!,
+        searchQuery: searchQuery, // <-- PENTING: Kirim text pencarian ke halaman detail
+        onBack: _closeKantinDetail,
+        onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
+        onRemoveCart: _removeOneFromCart,
+        itemCounts: itemCounts,
+      );
     }
 
+    // 2. CEK TAB MENU BAWAH (Home, Menu, About)
     switch (selectedIndex) {
-      case 0: // HOME
-        if (activeKantin != null) {
-          return CanteenMenuPage(
-            kantin: activeKantin!,
-            onBack: () => setState(() => activeKantin = null),
-            onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
-            onRemoveCart: _removeOneFromCart,
-            itemCounts: itemCounts,
-          );
-        }
+      case 0: // HOME (Landing Page)
         return LandingPage(
           username: displayUsername,
+          searchQuery: searchQuery, // Kirim text pencarian ke Landing Page
           onSeeAllKantin: () => setState(() => selectedIndex = 1),
-          onAddCart: (m) =>
-              _addMenuToCart(m, '1'), // Default kantin 1 untuk landing
+          onAddCart: (m) => _addMenuToCart(m, '1'),
           onRemoveCart: _removeOneFromCart,
           itemCounts: itemCounts,
-          onSelectKantin: (k) => setState(() => activeKantin = k),
+          onSelectKantin: _openKantinDetail, // Koneksi klik gambar kantin
         );
 
-      case 1: // MENU LIST
-        if (activeKantin != null) {
-          return CanteenMenuPage(
-            kantin: activeKantin!,
-            onBack: () => setState(() => activeKantin = null),
-            onAddCart: (m) => _addMenuToCart(m, activeKantin!.id),
-            onRemoveCart: _removeOneFromCart,
-            itemCounts: itemCounts,
-          );
-        }
+      case 1: // LIST SEMUA KANTIN
         return CanteenListPage(
-          onKantinTap: (k) => setState(() => activeKantin = k),
+          onKantinTap: _openKantinDetail, // Koneksi klik gambar kantin
           onBack: () => setState(() => selectedIndex = 0),
         );
 
-      case 2: // ABOUT
+      case 2: // ABOUT PAGE
         return const AboutPage();
 
       default:
