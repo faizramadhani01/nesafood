@@ -1,30 +1,46 @@
-// --- Base class Menu (Encapsulation & Inheritance) ---
 class Menu {
-  final String name;
-  final String image;
-  final double price;
-  final String description;
+  String _name;
+  String _image;
+  double _price;
+  String _description;
 
   Menu({
-    required this.name,
-    required this.image,
-    required this.price,
-    required this.description,
-  });
+    required String name,
+    required String image,
+    required double price,
+    required String description,
+  })  : _name = name,
+        _image = image,
+        _price = price,
+        _description = description;
 
-  // Polymorphism: getCategory akan di-override
+  String get name => _name;
+  String get image => _image;
+  String get description => _description;
+  
+  double get price => _price;
+
+  set price(double value) {
+    if (value < 0) {
+      print("Error: Harga tidak boleh di bawah 0!");
+    } else {
+      _price = value;
+    }
+  }
+
+  set name(String value) => _name = value;
+  set image(String value) => _image = value;
+  set description(String value) => _description = value;
+
   String getCategory() => 'Menu';
 
-  // placeholder factory digunakan saat objek Menu tidak tersedia
   factory Menu.placeholder() => Menu(
-    name: 'Unknown',
-    image: 'assets/placeholder.png',
-    price: 0.0,
-    description: '',
-  );
+        name: 'Unknown',
+        image: 'assets/placeholder.png',
+        price: 0.0,
+        description: '',
+      );
 }
-
-// --- Subclass Makanan ---
 class Makanan extends Menu {
   Makanan({
     required super.name,
@@ -37,7 +53,6 @@ class Makanan extends Menu {
   String getCategory() => 'Makanan';
 }
 
-// --- Subclass Minuman ---
 class Minuman extends Menu {
   Minuman({
     required super.name,
@@ -50,7 +65,6 @@ class Minuman extends Menu {
   String getCategory() => 'Minuman';
 }
 
-// --- Subclass Snack ---
 class SnackMenu extends Menu {
   SnackMenu({
     required super.name,
