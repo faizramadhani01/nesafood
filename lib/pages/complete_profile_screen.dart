@@ -7,7 +7,7 @@ import '../services/auth_service.dart';
 import '../theme.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
-  final User googleUser; // Data dari Google
+  final User googleUser; 
 
   const CompleteProfileScreen({super.key, required this.googleUser});
 
@@ -30,7 +30,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Isi otomatis data dari Google
     _nameCtrl = TextEditingController(
       text: widget.googleUser.displayName ?? '',
     );
@@ -51,7 +50,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // Panggil fungsi khusus Finalisasi
       await _authService.finalizeRegistration(
         uid: widget.googleUser.uid,
         email: _emailCtrl.text,
@@ -61,7 +59,6 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         photoUrl: widget.googleUser.photoURL,
       );
 
-      // Sukses -> Masuk Home
       if (mounted) {
         context.go('/home', extra: _nameCtrl.text);
       }
@@ -104,34 +101,34 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                         ? NetworkImage(widget.googleUser.photoURL!)
                         : null,
                     child: widget.googleUser.photoURL == null
-                        ? Icon(Icons.person, size: 40.sp) // Gunakan Sizer
+                        ? Icon(Icons.person, size: 40.sp) 
                         : null,
                   ),
-                  SizedBox(height: 2.h), // Gunakan Sizer
+                  SizedBox(height: 2.h), 
                   Text(
                     "Lengkapi Data",
                     style: GoogleFonts.poppins(
-                      fontSize: 18.sp, // Gunakan Sizer
+                      fontSize: 18.sp, 
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 1.h), // Gunakan Sizer
+                  SizedBox(height: 1.h), 
                   Text(
                     "Satu langkah lagi untuk masuk!",
                     style: GoogleFonts.poppins(
-                      fontSize: 10.sp, // Gunakan Sizer
+                      fontSize: 10.sp,
                       color: Colors.grey,
                     ),
                   ),
-                  SizedBox(height: 3.h), // Gunakan Sizer
+                  SizedBox(height: 3.h), 
 
                   _buildTextField(
                     label: "Nama Lengkap",
                     controller: _nameCtrl,
                     icon: Icons.person,
                   ),
-                  SizedBox(height: 2.h), // Gunakan Sizer
-                  // Email Read Only
+                  SizedBox(height: 2.h), 
+        
                   _buildTextField(
                     label: "Email (Terkunci)",
                     controller: _emailCtrl,
@@ -139,7 +136,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     readOnly: true,
                     fillColor: Colors.grey.shade200,
                   ),
-                  SizedBox(height: 2.h), // Gunakan Sizer
+                  SizedBox(height: 2.h),
 
                   _buildTextField(
                     label: "Nomor WhatsApp",
@@ -149,7 +146,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     validator: (v) =>
                         (v == null || v.isEmpty) ? "Wajib diisi" : null,
                   ),
-                  SizedBox(height: 2.h), // Gunakan Sizer
+                  SizedBox(height: 2.h),
 
                   _buildTextField(
                     label: "Buat Password Login",
@@ -158,7 +155,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     isPassword: true,
                   ),
 
-                  SizedBox(height: 3.h), // Gunakan Sizer
+                  SizedBox(height: 3.h), 
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -179,7 +176,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           : Text(
                               "Simpan",
                               style: GoogleFonts.poppins(
-                                fontSize: 12.sp, // Gunakan Sizer
+                                fontSize: 12.sp, 
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
