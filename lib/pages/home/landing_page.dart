@@ -59,9 +59,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     final heroItems = kantinList.take(5).toList();
-    final featuredMenus = kantinList.isNotEmpty
-        ? kantinList.expand((k) => k.menus).take(8).toList()
-        : <Menu>[];
+    // final featuredMenus dihapus karena tidak lagi dipakai
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -118,30 +116,9 @@ class _LandingPageState extends State<LandingPage> {
           else
             _buildGridMenu(apiMenus),
 
-          const SizedBox(height: 32),
-
-          // Rekomendasi Lokal
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Rekomendasi Lokal',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: widget.onSeeAllKantin,
-                child: Text(
-                  'Lihat Semua',
-                  style: GoogleFonts.poppins(color: NesaColors.terracotta),
-                ),
-              ),
-            ],
-          ),
-          _buildGridMenu(featuredMenus),
           const SizedBox(height: 60),
+          
+          // --- BAGIAN REKOMENDASI LOKAL TELAH DIHAPUS DI SINI ---
         ],
       ),
     );
@@ -289,7 +266,6 @@ class _LandingPageState extends State<LandingPage> {
             child: Stack(
               children: [
                 Positioned.fill(
-                  // PERBAIKAN: Menggunakan Image.network karena data berupa URL
                   child: Image.network(
                     k.image,
                     fit: BoxFit.cover,

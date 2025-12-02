@@ -58,6 +58,7 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   permission_handler: ^11.3.1
   universal_html: ^2.2.4
+  lottie: ^3.0.0
   
 flutter:
   uses-material-design: true
