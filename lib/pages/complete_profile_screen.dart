@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sizer/sizer.dart';
 import '../services/auth_service.dart';
 import '../theme.dart';
 
@@ -161,18 +162,28 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _handleFinalize,
+                      onPressed: _isLoading ? null : _handleFinalize,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: NesaColors.terracotta,
                         padding: EdgeInsets.symmetric(vertical: 1.5.h),
                       ),
-                      child: Text(
-                        "Simpan",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp, // Gunakan Sizer
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              "Simpan",
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.sp, // Gunakan Sizer
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ],
