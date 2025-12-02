@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:sizer/sizer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// --- IMPORT SERVICE NOTIFIKASI (BARU) ---
+import 'services/notification_service.dart';
+
 // Pages
 import 'splash_screen.dart';
 import 'login_screen.dart';
@@ -42,6 +45,10 @@ void main() async {
   } else {
     await Firebase.initializeApp();
   }
+
+  // --- INISIALISASI NOTIFIKASI (BARU) ---
+  // Wajib dipanggil di sini agar channel terbentuk dan izin diminta saat aplikasi mulai
+  await NotificationService().init();
 
   runApp(
     Sizer(
@@ -96,7 +103,7 @@ final GoRouter _router = GoRouter(
       },
     ),
 
-    // 7. Cart (Keranjang) - PERBAIKAN DI SINI
+    // 7. Cart (Keranjang)
     GoRoute(
       path: '/cart',
       builder: (context, state) {
@@ -104,7 +111,7 @@ final GoRouter _router = GoRouter(
         return const CartScreen(
           counts: {},
           menuMap: {},
-          kantinId: '', // Tambahkan parameter wajib ini (kosong default)
+          kantinId: '', 
         );
       },
     ),
